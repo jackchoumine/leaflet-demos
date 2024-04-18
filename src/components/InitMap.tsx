@@ -39,7 +39,23 @@ export const InitMapCom = () => {
   useEffect(() => {
     // NOTE 通过 geoJson 添加覆盖层
     L.geoJSON(geoJson).addTo(mapInstance.current)
-    const lineLayer = L.geoJSON().addTo(mapInstance.current)
+    const lineLayer = L.geoJSON(undefined, {
+      // 设置颜色
+      // style: {
+      //   color: 'red',
+      //   weight: 7,
+      //   opacity: 0.7,
+      // },
+      // 设置颜色的第二种方式
+      style: feature => {
+        // console.log('feature', feature)
+        return {
+          color: 'red',
+          weight: 7,
+          opacity: 0.7,
+        }
+      },
+    }).addTo(mapInstance.current)
     // 添加 覆盖层的第二种方式
     lineLayer.addData(geoJSONLine)
     // 从远程加载geojson数据 L.ajax 插件
