@@ -5,6 +5,7 @@ import { useInitMap } from '../hooks'
 export const InitMapCom = () => {
   const { LeafletMap, mapInstance } = useInitMap({
     zoomControl: false,
+    attributionControl: false,
   })
   const geoJson = {
     type: 'Feature',
