@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { Menu } from 'antd'
+import { InitMapCom } from './components'
+import 'leaflet/dist/leaflet.css'
+import './App.css'
 
 const App = () => {
   const [selectedKey, setSelectedKey] = useState('home')
@@ -13,7 +16,7 @@ const App = () => {
   const renderContent = key => {
     switch (key) {
       case 'home':
-        return <div>Home Content</div>
+        return <InitMapCom />
       case 'about':
         return <div>About Content</div>
       case 'contact':
@@ -24,21 +27,21 @@ const App = () => {
   }
 
   const menuItems = [
-    { label: 'Home', key: 'home' },
+    { label: '初始化', key: 'home' },
     { label: 'About', key: 'about' },
     { label: 'Contact', key: 'contact' },
   ]
 
   return (
-    <div>
+    <>
       <Menu
         mode='horizontal'
         selectedKeys={[selectedKey]}
         onClick={handleMenuClick}
         items={menuItems}
       />
-      <div>{renderContent(selectedKey)}</div>
-    </div>
+      <div className='map-area'>{renderContent(selectedKey)}</div>
+    </>
   )
 }
 
