@@ -81,6 +81,17 @@ export const InitMapCom = () => {
       // 移除放缩控件
       zoomControl.remove()
     }, 2000)
+
+    // 比例尺
+    L.control
+      .scale({
+        // position: 'bottomleft', // 'topleft', 'bottomleft', 'bottomright'
+        imperial: false, // 是否显示英制单位
+        metric: true, // 是否显示公制单位
+        maxWidth: 100, // 最大宽度
+        updateWhenIdle: true, // 是否在空闲时更新/是否移动地图结束后更新
+      })
+      .addTo(mapInstance.current)
   }, [mapInstance])
   return <LeafletMap></LeafletMap>
 }
