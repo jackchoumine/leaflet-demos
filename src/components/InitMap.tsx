@@ -3,7 +3,9 @@ import L from 'leaflet'
 
 import { useInitMap } from '../hooks'
 export const InitMapCom = () => {
-  const { LeafletMap, mapInstance } = useInitMap()
+  const { LeafletMap, mapInstance } = useInitMap({
+    zoomControl: false,
+  })
   const geoJson = {
     type: 'Feature',
     geometry: {
@@ -60,6 +62,25 @@ export const InitMapCom = () => {
     lineLayer.addData(geoJSONLine)
     // 从远程加载geojson数据 L.ajax 插件
     // 从用户本地计算机加载geojson数据 L.FileLayer 插件
+
+    // 放缩控件
+    const zoomControl = L.control
+      .zoom({
+        // position: 'topright', // 'topleft', 'bottomleft', 'bottomright'
+        zoomInText: '+',
+        zoomInTitle: '放大',
+        zoomOutText: '--',
+        zoomOutTitle: '-',
+      })
+      .addTo(mapInstance.current)
+    const zoomControlPosition = zoomControl.getPosition()
+    console.log('zoomControlPosition', zoomControlPosition)
+    const zoomControlContainer = zoomControl.getContainer()
+    console.log('zoomControlContainer', zoomControlContainer)
+    setTimeout(() => {
+      // 移除放缩控件
+      zoomControl.remove()
+    }, 2000)
   }, [mapInstance])
   return <LeafletMap></LeafletMap>
 }

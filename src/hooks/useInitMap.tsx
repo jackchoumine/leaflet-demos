@@ -3,7 +3,7 @@ import { Map, TileLayer } from 'leaflet'
 
 import { MAP_BOX_TILE_URL, MAP_BOX_TOKEN } from '../const'
 
-export function useInitMap() {
+export function useInitMap(options = {}) {
   const mapInstance = useRef<Map | null>(null)
 
   const LeafletMap = () => {
@@ -22,6 +22,7 @@ export function useInitMap() {
       const map = new Map(mapContainer.current, {
         center: [26.578343, 106.713478],
         zoom: 13,
+        ...options,
       })
       const mapBoxTile = new TileLayer(MAP_BOX_TILE_URL, {
         // 服务 id
