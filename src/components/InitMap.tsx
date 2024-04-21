@@ -78,10 +78,10 @@ export const InitMapCom = () => {
     console.log('zoomControlPosition', zoomControlPosition)
     const zoomControlContainer = zoomControl.getContainer()
     console.log('zoomControlContainer', zoomControlContainer)
-    setTimeout(() => {
-      // 移除放缩控件
-      zoomControl.remove()
-    }, 2000)
+    // setTimeout(() => {
+    //   // 移除放缩控件
+    //   zoomControl.remove()
+    // }, 2000)
 
     // 比例尺
     L.control

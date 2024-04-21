@@ -25,7 +25,7 @@ export function useInitMap(options = {}) {
           className='zoom-btn'
           type='image'
           src='vite.svg'
-          onClick={() => onClick(mapInstance.current)}
+          onClick={e => onClick(e, mapInstance.current)}
         />
       </div>
     )
@@ -34,6 +34,7 @@ export function useInitMap(options = {}) {
       const map = new Map(mapContainer.current, {
         center: [26.578343, 106.713478],
         zoom: 13,
+        zoomSnap: 0.25,
         ...options,
       })
       const mapBoxTile = new TileLayer(MAP_BOX_TILE_URL, {
@@ -46,8 +47,10 @@ export function useInitMap(options = {}) {
       mapBoxTile.addTo(map)
       return map
     }
-    function onClick(map: Map) {
+    function onClick(event, map: Map) {
       if (!map) return
+      event.stopPropagation()
+      // console.log(event.target, 'btn clicked')
       // map.setZoom(14)
       // 设置地图中心和放缩等级
       // map.setView([26.578343, 106.713478], 13)
@@ -60,7 +63,9 @@ export function useInitMap(options = {}) {
       // setZoomAround(fixedPoint,zoom)  围绕指定点放缩，放缩过程中，该点位置保持不变 等同于使用鼠标滚轮放缩
       // map.setZoomAround([26.578343, 106.713478], 12)
       // fitBounds(bounds) 将地图放缩到指定范围
-      map.fitBounds(initialBounds)
+      // map.fitBounds(initialBounds)
+      // NOTE 默认情况，地图等级只能设置整数，可在初始化时通过 zoomSnap 选项进行修改
+      // 有效的地图等级为 k*zoomSnap (k=0,1,2,3,4...)
     }
   }
 
