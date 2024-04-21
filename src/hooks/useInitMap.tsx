@@ -35,6 +35,7 @@ export function useInitMap(options = {}) {
         center: [26.578343, 106.713478],
         zoom: 13,
         zoomSnap: 0.25,
+        zoomDelta: 0.5, // 自带的放缩控件没修改一次放缩等级的增量
         ...options,
       })
       const mapBoxTile = new TileLayer(MAP_BOX_TILE_URL, {
@@ -57,7 +58,7 @@ export function useInitMap(options = {}) {
       // 设置地图中心和放缩等级，平滑飞过去
       // map.flyTo([26.578343, 106.713478], 10)
       // 地图等级增大3
-      // map.zoomIn(3)
+      map.zoomIn(0.25)
       // 地图等级减少3
       // map.zoomOut(3)
       // setZoomAround(fixedPoint,zoom)  围绕指定点放缩，放缩过程中，该点位置保持不变 等同于使用鼠标滚轮放缩
