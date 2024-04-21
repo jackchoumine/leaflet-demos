@@ -63,6 +63,10 @@ export const InitMapCom = () => {
     }).addTo(mapInstance.current)
     // 添加 覆盖层的第二种方式
     lineLayer.addData(geoJSONLine)
+    lineLayer.bindTooltip(layer => {
+      mapInstance.current.fitBounds(layer.getBounds())
+      return '新华街道'
+    })
     // 从远程加载geojson数据 L.ajax 插件
     // 从用户本地计算机加载geojson数据 L.FileLayer 插件
 
