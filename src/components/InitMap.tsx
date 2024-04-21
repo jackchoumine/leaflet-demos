@@ -63,10 +63,22 @@ export const InitMapCom = () => {
     }).addTo(mapInstance.current)
     // 添加 覆盖层的第二种方式
     lineLayer.addData(geoJSONLine)
-    lineLayer.bindTooltip(layer => {
-      mapInstance.current.fitBounds(layer.getBounds())
-      return '新华街道'
-    })
+    lineLayer.bindTooltip(
+      layer => {
+        mapInstance.current.fitBounds(layer.getBounds())
+        return '新华路'
+      },
+      {
+        // 提示框跟随鼠标移动
+        sticky: true,
+      }
+    )
+    // 提示框跟随鼠标移动
+    // 监听图层的鼠标移动事件
+    // lineLayer.on('mousemove', e => {
+    //   // console.log(e)
+    //   lineLayer.openTooltip(e.latlng)
+    // })
     // 从远程加载geojson数据 L.ajax 插件
     // 从用户本地计算机加载geojson数据 L.FileLayer 插件
 
