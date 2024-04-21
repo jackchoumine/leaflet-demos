@@ -16,3 +16,7 @@ body{
 .map-area {
   height: calc(100% - 46px);
 }
+.zoom-btn {
+  z-index: 410;
+  position: absolute;
+}

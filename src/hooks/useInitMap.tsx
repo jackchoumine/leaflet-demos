@@ -8,15 +8,27 @@ export function useInitMap(options = {}) {
 
   const LeafletMap = () => {
     const mapContainer = useRef<HTMLElement | null>(null)
+    // const inputRef = useRef<HTMLInputElement | null>(null)
+    let initialBounds = null
     useEffect(() => {
       const map = initMap()
       mapInstance.current = map
+      initialBounds = map.getBounds()
       // NOTE Uncaught Error: Map container is already initialized
       // 在 cleanup 时移除 map 实例 因为开发环境下 useEffect 执行两次，导致 Map 重复初始化
       return () => map.remove()
     }, [])
     // 返回地图组件
-    return <div ref={el => (mapContainer.current = el)} className='w-full h-full'></div>
+    return (
+      <div ref={el => (mapContainer.current = el)} className='w-full h-full'>
+        <input
+          className='zoom-btn'
+          type='image'
+          src='vite.svg'
+          onClick={() => onClick(mapInstance.current)}
+        />
+      </div>
+    )
 
     function initMap() {
       const map = new Map(mapContainer.current, {
@@ -33,6 +45,22 @@ export function useInitMap(options = {}) {
       })
       mapBoxTile.addTo(map)
       return map
+    }
+    function onClick(map: Map) {
+      if (!map) return
+      // map.setZoom(14)
+      // 设置地图中心和放缩等级
+      // map.setView([26.578343, 106.713478], 13)
+      // 设置地图中心和放缩等级，平滑飞过去
+      // map.flyTo([26.578343, 106.713478], 10)
+      // 地图等级增大3
+      // map.zoomIn(3)
+      // 地图等级减少3
+      // map.zoomOut(3)
+      // setZoomAround(fixedPoint,zoom)  围绕指定点放缩，放缩过程中，该点位置保持不变 等同于使用鼠标滚轮放缩
+      // map.setZoomAround([26.578343, 106.713478], 12)
+      // fitBounds(bounds) 将地图放缩到指定范围
+      map.fitBounds(initialBounds)
     }
   }
 
