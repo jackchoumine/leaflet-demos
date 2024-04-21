@@ -11,7 +11,7 @@ export function useGaoDeMap() {
         attributionControl: false,
       })
       mapInstance.current = map
-      map.setView([26.543571948749644, 106.70140365782015], 13)
+      map.setView([26.623862161082926, 106.62555339600561], 15)
       const aMap = initAMap(aMapContainer.current)
       map.on('zoom', event => {
         const zoom = map.getZoom()
