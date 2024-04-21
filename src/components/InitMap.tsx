@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import L from 'leaflet'
 
 import { useInitMap } from '../hooks'
+import { ZoomViewer } from '../plugins'
+
 export const InitMapCom = () => {
   const { LeafletMap, mapInstance } = useInitMap({
     zoomControl: false,
@@ -75,9 +77,9 @@ export const InitMapCom = () => {
       })
       .addTo(mapInstance.current)
     const zoomControlPosition = zoomControl.getPosition()
-    console.log('zoomControlPosition', zoomControlPosition)
+    // console.log('zoomControlPosition', zoomControlPosition)
     const zoomControlContainer = zoomControl.getContainer()
-    console.log('zoomControlContainer', zoomControlContainer)
+    // console.log('zoomControlContainer', zoomControlContainer)
     // setTimeout(() => {
     //   // 移除放缩控件
     //   zoomControl.remove()
@@ -93,6 +95,15 @@ export const InitMapCom = () => {
         updateWhenIdle: true, // 是否在空闲时更新/是否移动地图结束后更新
       })
       .addTo(mapInstance.current)
+
+    const zoomViewer = new ZoomViewer({
+      position: 'topright',
+    })
+    zoomViewer.addTo(mapInstance.current)
+    // setTimeout(() => {
+    //   // 移除放缩控件
+    //   zoomViewer.remove()
+    // }, 2000)
   }, [mapInstance])
   return <LeafletMap></LeafletMap>
 }
