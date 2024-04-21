@@ -18,6 +18,8 @@ body {
 
 .map-area {
   height: calc(100% - 46px);
+  width: 100vw;
+  position: relative;
 }
 
 .zoom-btn {
@@ -25,4 +27,20 @@ body {
   position: absolute;
   left: 10px;
   top: 75px;
+}
+
+.leaflet-map {
+  z-index: 100;
+}
+
+.a-map {
+  z-index: 90;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.bg-transparent {
+  background-color: transparent;
 }
