@@ -15,6 +15,18 @@ export function HuBeiPopulation() {
     import('../data/Hubei.json').then(huBeiGeoJson => {
       const jsonLayer = new L.GeoJSON(huBeiGeoJson, {
         style,
+        onEachFeature: (feature, layer) => {
+          // 如何才能让注记的大小随着比例尺的变化而变化呢?
+          // NOTE
+          const latlng = layer.getBounds().getCenter()
+          L.marker(latlng, {
+            icon: L.divIcon({
+              className: 'polygon-label',
+              html: feature.properties.name,
+              iconSize: [100, 20],
+            }),
+          }).addTo(mapInstance.current)
+        },
       })
       jsonLayer.addTo(mapInstance.current)
       mapInstance.current?.fitBounds(jsonLayer.getBounds())
