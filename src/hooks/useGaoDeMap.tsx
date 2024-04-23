@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Map } from 'leaflet'
+import { ZoomViewer } from '../plugins'
 
 export function useGaoDeMap() {
   const mapInstance = useRef<Map | null>(null)
@@ -11,6 +12,7 @@ export function useGaoDeMap() {
         attributionControl: false,
       })
       mapInstance.current = map
+      new ZoomViewer().addTo(map)
       map.setView([26.623862161082926, 106.62555339600561], 15)
       const aMap = initAMap(aMapContainer.current)
       map.on('zoom', event => {

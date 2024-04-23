@@ -1,7 +1,14 @@
+/*
+ * @Author      : ZhouQiJun
+ * @Date        : 2024-04-23 18:31:26
+ * @LastEditors : ZhouQiJun
+ * @LastEditTime: 2024-04-23 19:30:46
+ * @Description :
+ */
 import { useEffect } from 'react'
 import { useGaoDeMap } from '../hooks'
 import L from 'leaflet'
-import { ZoomViewer } from '../plugins'
+
 export function WithAMap() {
   const { WithAMap, mapInstance } = useGaoDeMap()
   const guiYangYiZhong = {
@@ -27,7 +34,6 @@ export function WithAMap() {
   }
   useEffect(() => {
     if (!mapInstance.current) return
-    const zoomViewer = new ZoomViewer()
     const geoJSONLayer = L.geoJSON(guiYangYiZhong)
     geoJSONLayer
       .bindPopup(layer => {
@@ -49,7 +55,6 @@ export function WithAMap() {
         console.log('popupclose')
       })
     geoJSONLayer.addTo(mapInstance.current)
-    zoomViewer.addTo(mapInstance.current)
   }, [mapInstance])
   return <WithAMap />
 }
