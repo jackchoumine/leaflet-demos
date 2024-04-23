@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { useGaoDeMap } from '../hooks'
 import L from 'leaflet'
 import { style } from '../data/huBei'
+import { Legend } from '../plugins'
 // import huBeiGeoJson from '../data/hubei.json'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 // const huBeiGeoJson = require('../data/Hubei.json')
-
 export function HuBeiPopulation() {
   const { WithAMap, mapInstance } = useGaoDeMap()
 
@@ -30,6 +30,8 @@ export function HuBeiPopulation() {
       })
       jsonLayer.addTo(mapInstance.current)
       mapInstance.current?.fitBounds(jsonLayer.getBounds())
+      const legend = new Legend()
+      legend.addTo(mapInstance.current)
     })
   }, [mapInstance])
 
