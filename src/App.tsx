@@ -1,6 +1,13 @@
+/*
+ * @Author      : ZhouQiJun
+ * @Date        : 2024-04-23 18:31:26
+ * @LastEditors : ZhouQiJun
+ * @LastEditTime: 2024-04-23 19:22:00
+ * @Description :
+ */
 import { useState } from 'react'
 import { Menu } from 'antd'
-import { InitMapCom, WithAMap } from './components'
+import { InitMapCom, WithAMap, HuBeiPopulation } from './components'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { useScript } from './hooks'
@@ -21,7 +28,7 @@ const App = () => {
       case 'about':
         return <WithAMap />
       case 'contact':
-        return <div>Contact Content</div>
+        return <HuBeiPopulation />
       default:
         return null
     }
@@ -30,7 +37,7 @@ const App = () => {
   const menuItems = [
     { label: '初始化', key: 'home' },
     { label: '集成高德地图', key: 'about' },
-    { label: 'Contact', key: 'contact' },
+    { label: '分级统计图法', key: 'contact' },
   ]
 
   return (
