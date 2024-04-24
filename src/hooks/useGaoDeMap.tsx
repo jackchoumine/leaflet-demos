@@ -41,6 +41,7 @@ export function useGaoDeMap() {
     )
 
     function initAMap(container: HTMLElement) {
+      // @ts-ignore
       const amap = new window.AMap.Map(container, {
         fadeOnZoom: false,
         navigationMode: 'classic',
