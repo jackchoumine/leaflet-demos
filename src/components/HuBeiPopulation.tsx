@@ -2,7 +2,7 @@
  * @Author      : ZhouQiJun
  * @Date        : 2024-04-23 19:05:26
  * @LastEditors : ZhouQiJun
- * @LastEditTime: 2024-04-25 11:01:29
+ * @LastEditTime: 2024-04-25 11:26:40
  * @Description : 分级统计图法 -- 展示湖北省人口分布
  */
 import { useEffect, useRef } from 'react'
@@ -52,6 +52,7 @@ export function HuBeiPopulation() {
           })
         },
       })
+      // TODO 还可以使用分级统计插件 choropleth
       layer.addTo(mapInstance.current)
       mapInstance.current?.fitBounds(layer.getBounds())
       jsonLayer.current = layer
