@@ -2,12 +2,12 @@
  * @Author      : ZhouQiJun
  * @Date        : 2024-04-23 18:31:26
  * @LastEditors : ZhouQiJun
- * @LastEditTime: 2024-04-23 19:22:00
+ * @LastEditTime: 2024-04-25 18:03:37
  * @Description :
  */
 import { useState } from 'react'
 import { Menu } from 'antd'
-import { InitMapCom, WithAMap, HuBeiPopulation } from './components'
+import { InitMapCom, WithAMap, HuBeiPopulation, BarPopulation } from './components'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { useScript } from './hooks'
@@ -29,6 +29,8 @@ const App = () => {
         return <WithAMap />
       case 'contact':
         return <HuBeiPopulation />
+      case 'bar':
+        return <BarPopulation />
       default:
         return null
     }
@@ -38,6 +40,7 @@ const App = () => {
     { label: '初始化', key: 'home' },
     { label: '集成高德地图', key: 'about' },
     { label: '分级统计图法', key: 'contact' },
+    { label: '柱状图统计', key: 'bar' },
   ]
 
   return (
