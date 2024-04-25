@@ -9,6 +9,7 @@ import { useEffect } from 'react'
 import { useGaoDeMap } from '../hooks'
 import L from 'leaflet'
 import * as d3 from 'd3'
+import { D3SvgOverlay } from '../plugins'
 
 export function BarPopulation() {
   const { WithAMap, mapInstance } = useGaoDeMap()
@@ -33,8 +34,8 @@ export function BarPopulation() {
       })
       huaZhongLayer.addTo(mapInstance.current)
       // FIXME 监听不到图层加载事件
-      huaZhongLayer.on('add',e=>{
-        console.log('add',e)
+      huaZhongLayer.on('add', e => {
+        console.log('add', e)
       })
       d3.csv('/华中人口数.csv').then(csvTable => {
         arr.forEach(item => {
@@ -43,6 +44,38 @@ export function BarPopulation() {
           item.male = +row['男']
         })
         console.log(arr)
+        const barOverlay = new D3SvgOverlay((sel, proj) => {
+          console.log(sel, proj)
+          const selRect = sel.selectAll('rect').data(arr)
+          const manBar = selRect.data(arr, d => {
+            return d.male
+          })
+          const OFF_SET_X = 7.5
+          const OFF_SET_Y = Δy => 5 + Δy / 150000
+          manBar
+            .enter()
+            .append('rect')
+            .attr('x', d => {
+              const pointOnMap = proj.latLngToLayerPoint(d.latLng)
+              return pointOnMap.x - OFF_SET_X
+            })
+            .attr('y', d => {
+              const pointOnMap = proj.latLngToLayerPoint(d.latLng)
+              return pointOnMap.y - OFF_SET_Y(d.male) / 1.5
+            })
+            .attr('width', OFF_SET_X * 2.0)
+            .attr('height', d => {
+              return d.male / 150000
+            })
+            .attr('fill', 'blue')
+            // FIXME 为什么这里的title不生效
+            .append('title')
+            .text(d => {
+              // console.log(d)
+              return `男性${d.male}人`
+            })
+        })
+        barOverlay.addTo(mapInstance.current)
       })
     })
   }, [mapInstance])
