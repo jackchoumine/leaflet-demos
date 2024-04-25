@@ -74,6 +74,31 @@ export function BarPopulation() {
               // console.log(d)
               return `男性${d.male}人`
             })
+
+          const selRect2 = sel.selectAll('rectFemale').data(arr)
+          const femaleBar = selRect2.data(arr, d => {
+            return d.female
+          })
+          femaleBar
+            .enter()
+            .append('rect')
+            .attr('x', d => {
+              const pointOnMap = proj.latLngToLayerPoint(d.latLng)
+              return pointOnMap.x + 10
+            })
+            .attr('y', d => {
+              const pointOnMap = proj.latLngToLayerPoint(d.latLng)
+              return pointOnMap.y - (5 + d.female / 150000) / 1.5
+            })
+            .attr('width', 15)
+            .attr('height', d => {
+              return d.female / 150000
+            })
+            .attr('fill', 'green')
+            .append('title')
+            .text(d => {
+              return `女性${d.female}人`
+            })
         })
         barOverlay.addTo(mapInstance.current)
       })
