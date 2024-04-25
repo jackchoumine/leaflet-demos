@@ -99,6 +99,26 @@ export function BarPopulation() {
             .text(d => {
               return `女性${d.female}人`
             })
+
+          const selText = sel.selectAll('text').data(arr)
+          const text = selText.data(arr, d => {
+            return d.male
+          })
+          text
+            .enter()
+            .append('text')
+            .text(d => {
+              return d.name
+            })
+            .attr('x', d => {
+              const pointOnMap = proj.latLngToLayerPoint(d.latLng)
+              return pointOnMap.x - OFF_SET_X
+            })
+            .attr('y', d => {
+              const pointOnMap = proj.latLngToLayerPoint(d.latLng)
+              return pointOnMap.y + 30
+            })
+          // .attr('stroke', '#fffff0')
         })
         barOverlay.addTo(mapInstance.current)
       })
