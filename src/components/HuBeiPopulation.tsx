@@ -2,14 +2,14 @@
  * @Author      : ZhouQiJun
  * @Date        : 2024-04-23 19:05:26
  * @LastEditors : ZhouQiJun
- * @LastEditTime: 2024-04-24 09:19:45
+ * @LastEditTime: 2024-04-25 11:01:29
  * @Description : 分级统计图法 -- 展示湖北省人口分布
  */
 import { useEffect, useRef } from 'react'
 import { useGaoDeMap } from '../hooks'
 import L from 'leaflet'
-import { style } from '../data/huBei'
-import { Legend } from '../plugins'
+import { style, cityData } from '../data/huBei'
+import { Legend,PopulationInfo } from '../plugins'
 
 // import huBeiGeoJson from '../data/hubei.json'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -20,6 +20,7 @@ export function HuBeiPopulation() {
 
   const jsonLayer = useRef(null)
   const _legend = useRef(null)
+  const populationInfo = useRef(null)
 
   useEffect(() => {
     const wuHanCenter = [30.584355, 114.298572]
@@ -30,6 +31,8 @@ export function HuBeiPopulation() {
         onEachFeature: (feature, layer) => {
           // TODO 如何才能让注记的大小随着比例尺的变化而变化呢?
           const latLng = layer.getBounds().getCenter()
+          // 为每个城市添加人口信息
+          feature.properties.population = cityData[feature.properties.name]
           L.marker(latLng, {
             icon: L.divIcon({
               className: 'polygon-label',
@@ -55,9 +58,15 @@ export function HuBeiPopulation() {
       const legend = new Legend()
       legend.addTo(mapInstance.current)
       _legend.current = legend
+      // 添加人口信息
+      // TODO 如何把人口信息放到对应的城市上
+     const _populationInfo = new PopulationInfo()
+      _populationInfo.addTo(mapInstance.current)
+      populationInfo.current = _populationInfo
     })
     return () => {
       _legend.current?.remove()
+      populationInfo.current?.remove()
     }
     // 使用到了mapInstance.current 需要加入依赖或者定义到 useEffect 内部
     function zoomToFeature(e) {
@@ -79,9 +88,13 @@ export function HuBeiPopulation() {
     // if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
     layer.bringToFront()
     // }
+    // 高亮显示人口信息
+    populationInfo.current.update(layer.feature.properties)
   }
 
   function resetHighlight(e) {
     jsonLayer.current.resetStyle(e.target)
+    // 重置人口信息
+    populationInfo.current.update()
   }
 }
