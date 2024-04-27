@@ -88,7 +88,7 @@ export function BarPopulation() {
             })
             .attr('y', d => {
               const pointOnMap = proj.latLngToLayerPoint(d.latLng)
-              return pointOnMap.y - (5 + d.female / 150000) / 1.5
+              return pointOnMap.y - (3.7 + d.female / 150000) / 1.5
             })
             .attr('width', 15)
             .attr('height', d => {
