@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useTianDiTuMap } from '../hooks'
 import { GeoJSON } from 'leaflet'
 import * as d3 from 'd3'
-import { D3SvgOverlay } from '../plugins'
+import { CommonLegend, D3SvgOverlay } from '../plugins'
 
 export function PieDemo() {
   const { WithTianDiTuMap, mapInstance } = useTianDiTuMap()
@@ -31,12 +31,12 @@ export function PieDemo() {
           item.third = +json[item.name]['第三产业增加值']
         })
         console.log(arr)
-        var pie = d3.pie()
+        const pie = d3.pie()
         //返回一个由10种不同颜色组成的数组
-        var color = d3.scaleOrdinal(d3.schemeCategory10)
+        const color = d3.scaleOrdinal(d3.schemeCategory10)
 
         const pieOverLayer = new D3SvgOverlay((sel, proj) => {
-          var selArcs = sel.selectAll('g.arc')
+          const selArcs = sel.selectAll('g.arc')
           arr.forEach(item => {
             let arrBinding = []
             const { first, second, third } = item
@@ -78,10 +78,11 @@ export function PieDemo() {
               })
 
             //添加注记
-            var proName = sel.selectAll('text').data(arr, function (d) {
-              return d.first
-            })
-            proName
+            sel
+              .selectAll('text')
+              .data(arr, function (d) {
+                return d.first
+              })
               .enter()
               .append('text') //绘制文本
               .text(function (d) {
@@ -99,7 +100,36 @@ export function PieDemo() {
             arrBinding = []
           })
         })
+
         pieOverLayer.addTo(mapInstance.current)
+
+        const legendOptions = {
+          position: 'bottomright', //图例位置
+          title: '图例',
+          // collapsed: false, //图例折叠与否
+          symbolWidth: 30, //符号宽
+          symbolHeight: 30, //符号高
+          // opacity: 0.5, //透明度
+          column: 1, //图例列数
+          legends: [
+            {
+              label: '第一产业增加值',
+              type: 'rectangle', //矩形方块
+              fillColor: color(0),
+            },
+            {
+              label: '第二产业增加值',
+              type: 'rectangle',
+              fillColor: color(1),
+            },
+            {
+              label: '第三产业增加值',
+              type: 'rectangle',
+              fillColor: color(2),
+            },
+          ],
+        }
+        new CommonLegend(legendOptions).addTo(mapInstance.current)
       })
     })
   }, [mapInstance])
