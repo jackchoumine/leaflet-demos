@@ -76,6 +76,26 @@ export function PieDemo() {
                 const title = `第${i + 1}产业增加值：${d.value}${json['单位']}`
                 return title
               })
+
+            //添加注记
+            var proName = sel.selectAll('text').data(arr, function (d) {
+              return d.first
+            })
+            proName
+              .enter()
+              .append('text') //绘制文本
+              .text(function (d) {
+                //设置文本内容
+                return d.name.slice(0, 2)
+              })
+              .attr('x', function (d) {
+                return proj.latLngToLayerPoint(d.latLng).x - 12
+              })
+              .attr('y', function (d) {
+                return proj.latLngToLayerPoint(d.latLng).y + 5
+              })
+              .attr('stroke', 'black')
+
             arrBinding = []
           })
         })
