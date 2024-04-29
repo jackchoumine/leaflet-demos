@@ -19,10 +19,14 @@ const tianDiTuUrl4 = `http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=
 // 影像注记
 const tianDiTuUrl5 = `http://t0.tianditu.gov.cn/cia_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cia&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${tianDiTuKey}`
 
-export function useTianDiTuMap() {
+export function useTianDiTuMap({
+  center = [26.623862161082926, 106.62555339600561],
+  zoom = 15,
+} = {}) {
   const mapInstance = useRef<Map | null>(null)
-
-  const WithTianDiTuMap = () => {
+  const _center = center
+  const _zoom = zoom
+  const WithTianDiTuMap = ({ center = _center, zoom = _zoom } = {}) => {
     const leafletMapContainer = useRef<HTMLElement | null>(null)
     useEffect(() => {
       const map = new Map(leafletMapContainer.current, {
@@ -30,7 +34,7 @@ export function useTianDiTuMap() {
       })
       mapInstance.current = map
       new ZoomViewer().addTo(map)
-      map.setView([26.623862161082926, 106.62555339600561], 15)
+      map.setView(center, zoom)
       const tianDiTuLayer2 = new TileLayer(tianDiTuUrl2, {
         id: '2',
         attribution: '天地图2',
