@@ -3,6 +3,8 @@ import { useTianDiTuMap } from '../hooks'
 import { GeoJSON } from 'leaflet'
 import * as d3 from 'd3'
 import { CommonLegend, D3SvgOverlay } from '../plugins'
+// FIXME 影响到柱状图统计的图例了，样式如何限制作用域？
+import './PieLegend.css'
 
 export function PieDemo() {
   const { WithTianDiTuMap, mapInstance } = useTianDiTuMap()
