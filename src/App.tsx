@@ -7,7 +7,13 @@
  */
 import { useState } from 'react'
 import { Menu } from 'antd'
-import { InitMapCom, WithAMap, HuBeiPopulation, BarPopulation } from './components'
+import {
+  InitMapCom,
+  WithAMap,
+  HuBeiPopulation,
+  BarPopulation,
+  PieDemo,
+} from './components'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
 import { useScript } from './hooks'
@@ -31,6 +37,8 @@ const App = () => {
         return <HuBeiPopulation />
       case 'bar':
         return <BarPopulation />
+      case 'pie':
+        return <PieDemo />
       default:
         return null
     }
@@ -41,6 +49,7 @@ const App = () => {
     { label: '集成高德地图', key: 'about' },
     { label: '分级统计图法', key: 'contact' },
     { label: '柱状图统计', key: 'bar' },
+    { label: '饼图统计', key: 'pie' },
   ]
 
   return (
