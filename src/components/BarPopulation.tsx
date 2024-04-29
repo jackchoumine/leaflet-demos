@@ -9,12 +9,33 @@ import { useEffect } from 'react'
 import { useGaoDeMap } from '../hooks'
 import L from 'leaflet'
 import * as d3 from 'd3'
-import { D3SvgOverlay } from '../plugins'
+import { D3SvgOverlay, CommonLegend } from '../plugins'
 
 export function BarPopulation() {
   const { WithAMap, mapInstance } = useGaoDeMap()
 
   const arr = []
+  let legend = new CommonLegend({
+    position: 'bottomright',
+    title: '图例',
+    // collapsed: true,
+    symbolWidth: 24,
+    symbolHeight: 24,
+    opacity: 0.5,
+    column: 1,
+    legends: [
+      {
+        label: '男性',
+        type: 'rectangle',
+        fillColor: 'blue',
+      },
+      {
+        label: '女性',
+        type: 'rectangle',
+        fillColor: 'green',
+      },
+    ],
+  })
 
   useEffect(() => {
     const wuHanCenter = [30.584355, 114.298572]
@@ -121,6 +142,7 @@ export function BarPopulation() {
           // .attr('stroke', '#fffff0')
         })
         barOverlay.addTo(mapInstance.current)
+        legend.addTo(mapInstance.current)
       })
     })
   }, [mapInstance])
