@@ -2,7 +2,7 @@
  * @Author      : ZhouQiJun
  * @Date        : 2024-04-23 18:31:26
  * @LastEditors : ZhouQiJun
- * @LastEditTime: 2024-04-25 18:03:37
+ * @LastEditTime: 2024-06-24 17:53:34
  * @Description :
  */
 import { useState } from 'react'
@@ -13,6 +13,7 @@ import {
   HuBeiPopulation,
   BarPopulation,
   PieDemo,
+  ReactDemos,
 } from './components'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
@@ -39,6 +40,8 @@ const App = () => {
         return <BarPopulation />
       case 'pie':
         return <PieDemo />
+      case 'react-demos':
+        return <ReactDemos />
       default:
         return null
     }
@@ -50,6 +53,7 @@ const App = () => {
     { label: '分级统计图法', key: 'contact' },
     { label: '柱状图统计', key: 'bar' },
     { label: '饼图统计', key: 'pie' },
+    { label: 'ReactDemos', key: 'react-demos' },
   ]
 
   return (
