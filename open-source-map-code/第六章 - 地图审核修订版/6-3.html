@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-3 时间轴-加载GPX</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/leaflet.timedimension.control.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/iso8601.js"></script>
+    <script src="JS/leaflet.timedimension.src.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src="JS/leaflet-omnivore.min.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 850px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [39.6, 3],
+        zoom:3,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>',
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    var norAnn = L.tileLayer.chinaProvider('TianDiTu.Normal.Annotion', {    //天地图注记图层
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    var timeDimension = new L.TimeDimension({
+        period: "PT5M",  //从第一个可用时间开始构建时间数组，相邻两个时间差为5分钟
+    });
+    myMap.timeDimension = timeDimension;   // 所有图层共享timeDimension对象
+
+    var player = new L.TimeDimension.Player({
+        transitionTime: 100,//图标从一个节点移动到另一个节点的时间，决定移动速度
+        loop: false,        //循环播放
+        startOver:true      //到最后一个位置后按播放键重新播放动画
+    }, timeDimension);
+
+    var timeDimensionControlOptions = {
+        player:        player,
+        timeDimension: timeDimension,
+        position:      'bottomleft',    //控件位置
+        autoPlay:      true,            //自动播放
+        minSpeed:      1,               //速度滑块上的最小可选值
+        speedStep:     0.5,             //速度滑块步长
+        maxSpeed:      15,              //速度滑块上的最大可选值
+    };
+    var timeDimensionControl = new L.Control.TimeDimension(timeDimensionControlOptions);
+    myMap.addControl(timeDimensionControl);
+
+    var icon = L.icon({
+        iconUrl: 'CSS/images/running.gif',
+        iconSize: [50, 50],
+        iconAnchor: [30,50]
+    });
+    var customLayer = L.geoJson(null, {
+        pointToLayer: function (feature, latLng) {
+            if (feature.properties.hasOwnProperty('last')) {
+                return new L.Marker(latLng, {
+                    icon: icon
+                });
+            }
+            return L.circleMarker(latLng);
+        }
+    });
+    var gpxLayer = omnivore.gpx('data/running_mallorca.gpx', null, customLayer).on('ready', function() {
+        myMap.fitBounds(gpxLayer.getBounds(), {
+            paddingBottomRight: [40, 40]
+        });
+    });
+
+    var gpxTimeLayer = L.timeDimension.layer.geoJson(gpxLayer, {
+        updateTimeDimension: true,
+        addlastPoint: true,
+        waitForReady: true  //待gpxLayer加载完成后状态变为‘ready'
+    });
+    gpxTimeLayer.addTo(myMap);
+
+</script>
+
+</body>
+</html>

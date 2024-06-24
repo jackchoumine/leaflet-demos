@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-9 风、洋流等模拟</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/leaflet-velocity.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet-velocity.js"></script>
+    <script src="JS/jquery-3.5.1.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center:[-16, 150],
+        zoom:5,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Satellite.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>',
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    var norAnn = L.tileLayer.chinaProvider('TianDiTu.Satellite.Annotion', {    //天地图注记图层
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    var layerControl = L.control.layers().addTo(myMap);
+    $.getJSON('data/wind-gbr.json', function (data) {
+        var velocityLayer = L.velocityLayer({
+            displayValues: true,   //是否显示详细信息
+            displayOptions: {      //详细信息显示选项
+                velocityType: 'GBR Wind',   //显示文字
+                displayPosition: 'bottomleft',      //显示位置
+                displayEmptyString: 'No wind data'  //空值时显示
+            },
+            data: data,
+            minVelocity: 0, //用于校准颜色
+            maxVelocity: 10, //用于校准颜色
+            velocityScale: 0.01, //粒子动画修改, 缺省值为0.005
+            //colorScale: [],  //定义hex/rgb颜色数组
+            //opacity: 0.97,   // 图层透明度，缺省值为0.97
+        }).addTo(myMap);
+        layerControl.addOverlay(velocityLayer, 'Wind - Great Barrier Reef');
+    });
+
+    $.getJSON('data/water-gbr.json', function (data) {
+        var velocityLayer = L.velocityLayer({
+            displayValues: true,
+            displayOptions: {
+                velocityType: 'GBR Water',
+                displayPosition: 'bottomleft',
+                displayEmptyString: 'No water data'
+            },
+            data: data,
+            maxVelocity: 0.5,
+            velocityScale: 0.2
+        }).addTo(myMap);
+        layerControl.addOverlay(velocityLayer, "Ocean Current - Great Barrier Reef");
+    });
+
+</script>
+</body>
+</html>

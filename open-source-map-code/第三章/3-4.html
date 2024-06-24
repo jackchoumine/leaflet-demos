@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3-4 加载百度地图</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/proj4.js"></script>
+    <script src="JS/proj4leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script type="text/javascript">
+    var myMap = L.map('mapid', {
+        crs: L.CRS.Baidu,           //百度坐标系
+        center: [30.55, 114.3],     //试着修改该组数字看看
+        zoom: 10                    //试着修改该组数字看看
+    });
+    L.tileLayer.chinaProvider('Baidu.Normal.Map', {     //百度常规地图图层
+            maxZoom: 18,        //最大缩放等级
+            minZoom: 5          //最小缩放等级
+        }).addTo(myMap);
+</script>
+</body>
+</html>

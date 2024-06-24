@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-2 时间轴-加载GeoJSON</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/leaflet.timedimension.control.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/iso8601.js"></script>
+    <script src="JS/leaflet.timedimension.src.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center:[30.5229,114.396],
+        zoom:16,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+        timeDimension: true,    //创建一个和地图关联的timeDimension对象
+        timeDimensionControl: true,     //时间轴控件
+        timeDimensionControlOptions: {  //时间轴属性设置
+            loopButton: true,   //循环播放按钮
+            autoPlay: true,     //自动播放
+            playerOptions: {    //播放选项
+                transitionTime: 1000,   //图标从一个节点移动到另一个节点的时间，决定移动速度
+                loop: true      //循环播放
+            },
+            speedSlider:false,  //隐藏速度控制按钮
+        },
+    });
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>',
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    var norAnn = L.tileLayer.chinaProvider('TianDiTu.Normal.Annotion', {    //天地图注记图层
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    var icon = L.icon({     //图标
+        iconUrl: 'CSS/images/walking.gif',
+        iconSize: [50, 50],
+        iconAnchor: [30,50]
+    });
+    var geojsonLayer =  new L.GeoJSON.AJAX("data/path.geojson", {
+        pointToLayer: function (feature, latLng) {
+            if (feature.properties.hasOwnProperty('last')) {
+                return new L.Marker(latLng, {
+                    icon: icon
+                });
+            }
+            return L.circleMarker(latLng);
+        }
+    });
+    geojsonLayer.on('data:loaded',function(data){
+        var geoJSONTDLayer = L.timeDimension.layer.geoJson(geojsonLayer, {
+            updateTimeDimension: true,//用GeoJSON数据中的时间序列更新时间轴控件上显示的播放时间
+            duration: 'PT2M',   //设置为空时，所有之前时间的路径都会显示
+            updateTimeDimensionMode: 'replace',//时间处理方式，新时间替代老时间
+            addlastPoint: true, //用于增加一个点来自定义运动图标
+        });
+        // 添加显示轨迹图层和时间动画图层
+        geojsonLayer.addTo(myMap);
+        geoJSONTDLayer.addTo(myMap);
+    });
+</script>
+
+</body>
+</html>

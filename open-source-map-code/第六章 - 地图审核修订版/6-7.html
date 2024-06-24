@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-7 蚂蚁运动</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/jquery-3.5.1.js"></script>
+    <script src="JS/leaflet-ant-path.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map('mapid', {
+        center: [30.55, 114.3],     //试着修改该组数字看看
+        zoom: 10                    //试着修改该组数字看看
+    });
+    L.tileLayer.chinaProvider('GaoDe.Normal.Map',{       //高德地图常规地图图层
+        attribution: '地图数据 &copy; <a href="https://lbs.amap.com/">高德地图</a> ',
+        maxZoom:18,     //最大缩放等级
+        minZoom:10       //最小缩放等级
+    }).addTo(myMap);
+
+    myMap.on('click', onMapClick);
+    var latlngArr=[];   //用于存储起止点经纬度坐标
+    var layerGroup=L.layerGroup().addTo(myMap);//用于存储起止点图标
+    var key="65e453b2952957e068ba517a7cf0f6ce"; //高德key
+    var path;   //轨迹线
+    function onMapClick(e) {
+        if(typeof(path) !="undefined"){
+            myMap.removeLayer(path);    //去掉已有轨迹线
+        }
+        if(layerGroup.getLayers().length==2){
+            layerGroup.clearLayers();     //去掉地图上的已有起止点图标
+        }
+        var marker=L.marker(e.latlng);
+        layerGroup.addLayer(marker);      //起止点图标
+        var lat=L.Util.formatNum(e.latlng.lat,6);
+        var lng=L.Util.formatNum(e.latlng.lng,6);
+        latlngArr.push([lat,lng]);      //存储起止点坐标，传递给高德地图路径规划服务
+        if(latlngArr.length==2){
+            myMap.fitBounds([latlngArr[0],latlngArr[1]]);
+            var para="destination="+latlngArr[1][1]+","+latlngArr[1][0]+"&"+"origin="+latlngArr[0][1]+","+latlngArr[0][0]+"&output=JSON";
+            var url="https://restapi.amap.com/v3/direction/walking?";
+            url=url+para+"&key="+key;   //构建高德地图步行路径规划服务URL
+            var polyline="";
+            $.get(url,function(data){   //访问高德地图步行路径规划服务
+                var paths=data.route.paths;     //获得高德地图步行路径
+                for(var i=0;i<paths.length;i++){//步行路径可能由好几段路径组成
+                    var steps=paths[i].steps;   //获取步行结果列表
+                    for(var j=0;j<steps.length;j++){//获取每段步行方案的路径线节点坐标
+                        if(polyline!=""){
+                            polyline=polyline+";"+steps[j].polyline;
+                        }else{
+                            polyline=polyline+steps[j].polyline;
+                        }
+                    }
+                }
+                if(polyline!=""){
+                    var nodeArr=polyline.split(";");
+                    var latlngs=[];
+                    //将节点字符串数组转换成数值数组
+                    for(var k=0;k<nodeArr.length;k++){
+                        var ele=nodeArr[k].split(",").map(Number).reverse();
+                        latlngs.push(ele);
+                    }
+                    const options = {
+                        use: L.polyline,//还可以是L.curve，L.polygon，L.rectangle，L.circle
+                        delay: 400, //确定虚线运动速度
+                        dashArray: [10,20], //虚线子线段长度和线段间隔距离
+                        weight: 8,      //线粗
+                        color: "red",   //背景实线颜色
+                        opacity:0.7,    //透明度
+                        pulseColor: "#FFFFFF"   //虚线颜色
+                    };
+                    path = new L.Polyline.AntPath(latlngs, options).addTo(myMap);
+                }
+
+            });
+            latlngArr=[];
+        }
+        //alert("经纬度：" + L.Util.formatNum(e.latlng.lng,3)+", "+L.Util.formatNum(e.latlng.lat,3));
+    };
+
+
+
+
+</script>
+</body>
+</html>

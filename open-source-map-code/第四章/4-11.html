@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>4-11 视频配准</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/numeric.js"></script>
+    <script src="JS/jquery-3.5.1.js"></script>
+    <script src="JS/distortableVideoOverlay.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map('mapid').setView([37.8, -96], 4);
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        maxZoom: 18,    //最大缩放等级
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+            'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',       //数据来源、知识版权等属性
+        id: "mapbox/satellite-v9",   //服务ID
+        tileSize: 512,          //瓦片尺寸
+        zoomOffset: -1,         //补偿缩放等级偏差
+        accessToken:'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'  //授权令牌
+    }).addTo(myMap);
+    var bounds = L.latLngBounds([[ 32, -130], [ 13, -100]]);    //视频放置的范围
+    myMap.fitBounds(bounds);   //将地图缩放至该范围
+    /*var videoUrls = [
+        'data/patricia_nasa.webm',  //视频相对路径或绝对路径
+        'data/patricia_nasa.mp4',
+    ];*/
+    var videoUrls = 'data/patricia_nasa.webm'; //视频相对路径或绝对路径，可以是多个视频组成的数组
+    /*var videoOverlay = L.videoOverlay( videoUrls, bounds, {
+       opacity: 0.8,   //透明度
+       muted:true,     //Chrome浏览器只支持静音播放，有些浏览器可不用设置静音
+   }).addTo(myMap);*/
+
+    var videoOverlay = L.distortableVideoOverlay(videoUrls, bounds, {
+        opacity: 0.8,
+        muted:true,     //Chrome浏览器只支持静音播放，有些浏览器可不用设置静音
+    }).addTo(myMap);
+    var topLeft =bounds.getNorthWest();
+    var topRight = bounds.getNorthEast();
+    var bottomRight = bounds.getSouthEast();
+    var bottomLeft = bounds.getSouthWest();
+    var corners=[topLeft,topRight,bottomRight,bottomLeft];//获取范围四个角落的坐标
+    var dragMarker=Array();
+    for(var i=0;i<corners.length;i++){
+        dragMarker[i]=L.marker(corners[i],{draggable:true}).addTo(myMap);//在每个角落放置一个图标
+        dragMarker[i].on('drag',function () { //添加图标拖动事件
+            for(var j=0;j<corners.length;j++){
+                corners[j]=dragMarker[j].getLatLng();   //记录四个图标的新坐标
+            }
+            videoOverlay.setCorners(corners);   //重新放置视频
+        });
+    };
+    /*for(var i=0;i<dragMarker.length;i++){
+        dragMarker
+    };*/
+    videoOverlay.on('load', function () {   //创建暂停控件
+        var MyPauseControl = L.Control.extend({
+            onAdd: function() {
+                var button = L.DomUtil.create('input'); //创建input元素
+                button.type = "image";  //图片按钮
+                button.src="CSS/images/暂停.png"; //设置按钮图标
+                button.style="width:30px; height:30px; cursor:pointer";//指定样式
+                L.DomEvent.on(button, 'click', function () {    //监听单击事件
+                    videoOverlay.getElement().pause();  //执行暂停操作
+                });
+                return button;
+            }
+        });
+        var MyPlayControl = L.Control.extend({   //创建播放控件
+            onAdd: function() {
+                var button = L.DomUtil.create('input'); //创建input元素
+                button.type = "image";  //图片按钮
+                button.src="CSS/images/播放.png"; //设置按钮图标
+                button.style="width:30px; height:30px; cursor:pointer";//指定样式
+                L.DomEvent.on(button, 'click', function () {   //监听单击事件
+                    videoOverlay.getElement().play();  //执行播放操作
+                });
+                return button;
+            }
+        });
+
+        var pauseControl = (new MyPauseControl()).addTo(myMap);//添加暂停控件
+        var playControl = (new MyPlayControl()).addTo(myMap);//添加播放控件
+    });
+    /*videoOverlay.on('load', function () {
+        var mp4=videoOverlay.getElement();
+        var promise = videoOverlay.getElement().play();
+        if (promise !== undefined) {
+            promise.then(function(){
+                // Autoplay started!
+
+            }).catch(function() {
+                // Autoplay was prevented.
+
+                //--静音再播放--
+                mp4.muted=true;
+                mp4.play();
+
+                //--显示播放按钮--
+                //show a "Play" button so that user can start playback.
+            });
+        }
+    });*/
+</script>
+</body>
+</html>

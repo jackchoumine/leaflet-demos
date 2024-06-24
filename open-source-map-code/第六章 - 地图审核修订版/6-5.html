@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-5 路径规划（Leaflet高德地图路径规划插件）</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+
+    <script SRC="JS/AMap/L.Routing.js"></script>
+    <script SRC="JS/AMap/L.Routing.Conf.js"></script>
+    <script SRC="JS/AMap/L.Routing.Reader.js"></script>
+    <script SRC="JS/AMap/L.Routing.Query.js"></script>
+    <script SRC="JS/AMap/L.Request.js"></script>
+    <script SRC="JS/AMap/L.ChinaProj.js"></script>
+    <script src="JS/AMap/L.Routing.Bywalk.js"></script>
+    <script src="JS/AMap/L.Routing.Bybus.js"></script>
+    <script src="JS/AMap/L.Routing.Bycar.js"></script>
+
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map('mapid', {
+        center: [30.55, 114.3],     //试着修改该组数字看看
+        zoom: 10                    //试着修改该组数字看看
+    });
+    L.tileLayer.chinaProvider('GaoDe.Normal.Map',{       //高德地图常规地图图层
+        maxZoom:18,     //最大缩放等级
+        minZoom:5       //最小缩放等级
+    }).addTo(myMap);
+    var route = new L.Routing(myMap,{
+        transform: "GCJ02",
+        color:"RGBA(245, 0, 0, 1.0)",
+        colorfulLine: true,
+        isZoom: true,
+        isShowRoutePopup:true,
+        isShowQueryPopup:true,
+    });
+    //route.getRoute(L.Routing.BYWALK, [30.55, 114.3], [30.55, 114.35]);
+
+    myMap.on('click', onMapClick);
+    var latlngArr=[];
+    var layGroup=L.layerGroup().addTo(myMap);
+    function onMapClick(e) {
+        //var lat=e.latlng;
+        if(layGroup.getLayers().length==2){
+            layGroup.clearLayers();
+        }
+        var marker=L.marker(e.latlng);
+        layGroup.addLayer(marker);
+        latlngArr.push([e.latlng.lat,e.latlng.lng]);
+        if(latlngArr.length==2){
+            route.getRoute(L.Routing.BYWALK, latlngArr[0], latlngArr[1]);
+            latlngArr=[];
+        }
+        //alert("经纬度：" + L.Util.formatNum(e.latlng.lng,3)+", "+L.Util.formatNum(e.latlng.lat,3));
+    };
+
+
+</script>
+</body>
+</html>

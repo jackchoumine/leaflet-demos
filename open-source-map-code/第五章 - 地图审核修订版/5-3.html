@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>5-3 分区统计图——柱状图</title>
+    <link rel="stylesheet" href="CSS/leaflet.css" />
+    <link rel="stylesheet" href="CSS/leaflet.legend.css" />
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src="JS/d3.js"></script>
+    <script src="JS/L.D3SvgOverlay.js"></script>
+    <script src="JS/leaflet.legend.js"></script>
+    <style type="text/css">
+      body{
+          padding: 0;
+          margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="mapid" style="width: 100vw; height: 100vh;"></div>
+    <script>
+          var myMap = L.map("mapid", {
+              zoomSnap:0.25,
+              center: [30.5, 113],
+              zoom: 5.25,
+              zoomControl: false,   //网页初始化时不加载默认缩放按钮
+          });
+          /**
+           * 以下代码可添加天地图作为底图
+           * **/
+          var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+              key: "8dae84fa331cbe1d834dde924688cad2",
+              attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>,<a href="http://datav.aliyun.com/tools/atlas/">DATAV.GeoAtlas</a> ,' +
+                  '统计数据 &copy;<a href="http://www.stats.gov.cn/tjsj/pcsj/rkpc/6rp/indexch.htm">国家统计局</a>',
+              maxZoom: 18,
+              minZoom: 5,
+          }).addTo(myMap);
+
+          L.control.zoom({
+              zoomInTitle: '放大',
+              zoomOutTitle: '缩小'
+          }).addTo(myMap);
+
+          function style(feature) {   //华中三省样式设置样式设置
+              return {
+                  fillColor: "#a5a5a5",
+                  weight: 1,
+                  opacity: 1,
+                  color: 'black',
+                  dashArray: '3',
+                  fillOpacity: 0.7
+              };
+          };
+
+          var geojsonLayer = new L.GeoJSON.AJAX("data/华中地区2021.json",{
+              style:style,    //设置样式
+          }).addTo(myMap);
+      geojsonLayer.on('add',e=>{
+          console.log(e,'add')
+      })
+      var arr=[]; //用于存储绑定的数据
+      geojsonLayer.on('data:loaded',function(data){
+              geojsonLayer.eachLayer(function (layer){
+                  arr.push({
+                      name: layer.feature.properties.name,
+                      latlng: layer.getBounds().getCenter()  //获取各省中心，作为注记和图表锚点
+                  })
+              });
+              d3.csv("data/华中人口数.csv",function(d) {    //将csv文件里面的人口数据写入数组
+                  for (var i =0; i < arr.length; i++) {
+                      if (arr[i].name == d["省份"]) {
+                          arr[i].male = +d["男"];
+                          arr[i].female = +d["女"];
+                          return arr[i];
+                      }
+                  }
+              }).then(function (data) {
+                  //console.log(arr)
+                  var barOverlay = L.d3SvgOverlay(function(sel,proj){
+                    console.log(proj)
+                      //添加注记
+                      var proName=sel.selectAll("text").data(arr,function(d){
+                          return d.male;
+                      });
+                      proName.enter()
+                          .append("text")     //绘制文本
+                          .text(function(d){  //设置文本内容
+                              return d.name;
+                          })
+                          .attr('x',function(d){
+                            const point = proj.latLngToLayerPoint(d.latlng)
+                            console.log(point)
+                              return proj.latLngToLayerPoint(d.latlng).x-15;
+                          })
+                          .attr('y',function(d){
+                              return proj.latLngToLayerPoint(d.latlng).y+10;
+                          })
+                          .attr('stroke','black');
+
+                      //男性人口柱状图
+                      var selRec=sel.selectAll("rect");
+                      var maleBar=selRec.data(arr,function(d){
+                          return d.male;
+                      });
+                      maleBar.enter()
+                          .append("rect") //绘制矩形条柱
+                          .attr('x',function(d){  //指定矩形放置的横坐标
+                              return proj.latLngToLayerPoint(d.latlng).x-15;
+                          })
+                          .attr('y',function(d){  //指定矩形放置的纵坐标
+                              return proj.latLngToLayerPoint(d.latlng).y-5-d.male/150000;
+                          })
+                          .attr("width",15)   //设置矩形宽度
+                          .attr("height",function(d){ //设置矩形高度
+                              return d.male/150000;
+                          })
+                          .attr("fill", "#3182bd")    //设置矩形填充色
+                          .append("title")    //鼠标提示
+                          .text(function(d) {
+                              return "男性：" + d.male+"人";
+                          });
+
+                      //女性人口柱状图，注意selectAll里面的命名
+                      var femaleBar=selRec.data(arr,function(d){
+                          return d.female;    //改变selectAll参数，此处为女性人口数
+                      });
+                      femaleBar.enter()
+                          .append("rect") //绘制矩形条柱
+                          .attr('x',function(d){
+                              return proj.latLngToLayerPoint(d.latlng).x+2;//根据男性柱状图的横坐标进行调整，使其位于男性柱状图旁边
+                          })
+                          .attr('y',function(d){
+                              return proj.latLngToLayerPoint(d.latlng).y-5-d.female/150000;
+                          })
+                          .attr("width",15)
+                          .attr("height",function(d){
+                              return d.female/150000;     //由女性人口数来定矩形高度
+                          })
+                          .attr("fill", "#de2d26")
+                          .append("title")
+                          .text(function(d) {
+                              return "女性：" + d.female+"人";
+                          });
+                  });
+                  barOverlay.addTo(myMap);
+              });
+
+              //增加图例
+              L.control.Legend({
+                  position: "bottomright",//图例位置
+                  title: "图例",
+                  collapsed: false,  //图例折叠与否
+                  symbolWidth:30,    //符号宽
+                  symbolHeight:30,   //符号高
+                  opacity: 0.5,      //透明度
+                  column: 1,   //图例列数
+                  legends: [{
+                      label: "男性",
+                      type: "rectangle",  //矩形方块
+                      fillColor: "#3182bd",
+                  },{
+                      label: "女性",
+                      type: "rectangle",
+                      fillColor: "#de2d26",
+                  }
+                  ]
+              }).addTo(myMap);
+          });
+    </script>
+  </body>
+</html>

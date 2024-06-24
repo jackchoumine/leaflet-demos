@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-11 流场动画控制</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/6-11.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/d3.js"></script>
+    <script src="JS/leaflet.canvaslayer.field.js"></script>
+    <script src="JS/chroma.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<div id="floating-panel">
+    <ul>
+        <li>
+            <label>Width</label>
+            <input id="width" type="range" min="0" max="5" step="0.2" value="0.8">
+        </li>
+        <li>
+            <label>Color</label>
+            <input id="color" type="color" value="#ffffff">
+        </li>
+        <li>
+            <label>Velocity</label>
+            <input id="velocityScale" type="range" min="1000" max="10000" value="5000" style="transform: rotateY(180deg);">
+        </li>
+        <li>
+            <label>Opacity</label>
+            <input id="opacity" type="range" min="0" max="1" value="1" step="0.1">
+        </li>
+    </ul>
+</div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [45,-50],
+        zoom:2,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Satellite.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>',
+        maxZoom: 12,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    // 矢量动画图层
+    d3.text('data/Bay_U.asc').then(function (u){
+        d3.text('data/Bay_V.asc').then(function (v) {
+            var vf = L.VectorField.fromASCIIGrids(u, v);
+            layer = L.canvasLayer.vectorFieldAnim(vf).addTo(myMap);
+            myMap.fitBounds(layer.getBounds());
+            layer.on('click', function (e) {
+                if (e.value !== null) {
+                    var vector = e.value;
+                    var v = vector.magnitude().toFixed(2);
+                    var d = vector.directionTo().toFixed(0);
+                    var html = (`<span class="popupText">${v} m/s to ${d}&deg</span>`);
+                    var popup = L.popup()
+                        .setLatLng(e.latlng)
+                        .setContent(html)
+                        .openOn(myMap);
+                }
+            });
+        });
+    });
+
+    /* 交互式样式修改*/
+    var width = document.getElementById('width');
+    width.addEventListener('input', function () {
+        layer.options.width = width.value;
+    });
+
+    var color = document.getElementById('color');
+    color.addEventListener('input', function () {
+        layer.options.color = color.value;
+    });
+
+    var velocityScale = document.getElementById('velocityScale');
+    velocityScale.addEventListener('input', function () {
+        layer.options.velocityScale = 1 / velocityScale.value;
+    });
+
+    var opacity = document.getElementById('opacity');
+    opacity.addEventListener('input', function () {
+        layer.setOpacity(opacity.value);
+    });
+</script>
+</body>
+</html>

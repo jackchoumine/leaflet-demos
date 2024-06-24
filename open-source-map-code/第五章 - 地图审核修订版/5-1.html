@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>5-1 分级统计图</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/5-1.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src="data/Hubei.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        zoomSnap:0.25,
+        center: [30.8, 113],
+        zoom: 6.5,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    /**
+     * 以下代码可添加天地图作为底图
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>,<a href="http://>DATAV.GeoAtlas</a> ,' +
+            '统计数据 &copy;<a href="http://www.stats.gov.cn/tjsj/tjgb/rkpcgb/dfrkpcgb/201202/t20120228_30391.html">国家统计局</a>',
+        maxZoom: 18,
+        minZoom: 5,
+    }).addTo(myMap);     **/
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    //L.control.scale().addTo(myMap);
+    //以下代码用于修改比例尺控件的相关属性
+    L.control.scale({
+        maxWidth : 200,     //最大宽度
+        metric : true,      //是否显示米制长度单位
+        imperial : false,   //是否显示英制长度单位
+        updateWhenIdle : true,  //是否在移动地图结束后更新
+    }).addTo(myMap);
+
+    function getColor(d) {      //分级颜色
+        return d >6000000  ? '#a63603' :
+            d > 4000000   ? '#e6550d' :
+                d > 2500000   ? '#fd8d3c' :
+                    d > 100000   ? '#fdbe85' :
+                        '#feedde';
+    };
+
+    function style(feature) {   //分级统计图样式设置
+        return {
+            fillColor: getColor(cityData[feature.properties.name]),
+            weight: 1,
+            opacity: 1,
+            color: 'black',
+            dashArray: '3',
+            fillOpacity: 0.8
+        };
+    };
+
+    function highlightFeature(e) {  //鼠标悬停事件处理函数
+        var layer = e.target;   //获取鼠标悬停目标
+        layer.setStyle({
+            weight: 3,
+            color: 'blue',
+            dashArray: '',
+            fillOpacity: 0.7
+        });
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+            layer.bringToFront();   //IE、Opera、Microsoft Edge浏览器不适用
+        };
+        info.update(layer.feature.properties);
+    };
+
+    var geojsonLayer = new L.GeoJSON.AJAX("data/Hubei.json",{
+        style:style,    //设置样式
+        onEachFeature: function (feature, layer) {
+            var latlng=layer.getBounds().getCenter();  //获取几何中心，作为注记锚点
+            L.marker(latlng, {
+                icon: L.divIcon({
+                    className: 'polygonLabel',    //设置类名，用于样式控制
+                    html: feature.properties.name,  //注记内容
+                    iconSize: [100, 20],   //注记放置空间
+                    //iconAnchor:L.point(0, 0),
+                }),
+                interactive:false,      //忽视鼠标事件
+            }).addTo(myMap);
+            layer.on({      //监听鼠标事件
+                mouseover: highlightFeature,//鼠标悬停
+                mouseout: resetHighlight,   //鼠标移出
+                click: zoomToFeature,       //鼠标单击
+            });
+        }
+    }).addTo(myMap);
+
+    //恢复原始状态
+    function resetHighlight(e) {
+        geojsonLayer.resetStyle(e.target);
+        info.update();
+    }
+
+    function zoomToFeature(e) {
+        myMap.fitBounds(e.target.getBounds());
+    }
+
+    //增加标题及各城市人口信息显示控件
+    var info = L.control();
+    info.onAdd = function (myMap) {
+        this._div = L.DomUtil.create('div', 'info'); //创建一个类名为"info"的div元素
+        this.update();
+        return this._div;
+    };
+    // 更新内容
+    info.update = function (props) {
+        this._div.innerHTML = '<h4>湖北省人口分布</h4>' +  (props ?
+            '<b>' + props.name + '</b><br />' + cityData[props.name] + ' 人'
+            : '鼠标移动到各个城市即可查看');
+    };
+    info.addTo(myMap);
+
+    //增加图例控件
+    var legend = L.control({position: 'bottomright'});  //图例位置
+    legend.onAdd = function (myMap) {
+        var div = L.DomUtil.create('div', 'info legend'),
+            divTitle=L.DomUtil.create('div', 'title'),  //图例二字作为标题
+            divInfo=L.DomUtil.create('div', 'legend'),
+            grades = [0, 100000, 2500000, 4000000, 6000000]; //和getColor( )函数分级设色一一对应
+        divTitle.innerHTML='<b>图例（人）</b>';
+        div.appendChild(divTitle);
+        //循环人口分级数组，在每个颜色块后面添加一个标注表示对应的人口数量范围
+        for (var i = 0; i < grades.length; i++) {
+            divInfo.innerHTML +=
+                '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                (grades[i]+1)+ (grades[i + 1] ? '&ndash;' + grades[i + 1]+ '<br>' : '+');
+        }
+        div.appendChild(divInfo);
+        return div;
+    };
+    legend.addTo(myMap);
+</script>
+</body>
+</html>

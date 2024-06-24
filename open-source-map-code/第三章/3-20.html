@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3-20 底图图层和覆盖图层控件</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+            key: "8dae84fa331cbe1d834dde924688cad2",
+            maxZoom: 18,
+            minZoom: 5
+        });
+     var norAnn = L.tileLayer.chinaProvider('TianDiTu.Normal.Annotion', {
+            key: "8dae84fa331cbe1d834dde924688cad2",
+            maxZoom: 18,
+            minZoom: 5
+        });
+     var satMap = L.tileLayer.chinaProvider('TianDiTu.Satellite.Map', {
+            key: "8dae84fa331cbe1d834dde924688cad2",
+            maxZoom: 18,
+            minZoom: 5
+        });
+     var satAnn = L.tileLayer.chinaProvider('TianDiTu.Satellite.Annotion', {
+            key: "8dae84fa331cbe1d834dde924688cad2",
+            maxZoom: 18,
+            minZoom: 5
+        });
+
+    //var norLayers = L.layerGroup([norMap, norAnn]);
+    //var imageLayers = L.layerGroup([satMap, satAnn]);
+
+    var baseLayers = {      //底图图层
+        "地图": norMap,
+        "影像": satMap,
+    }
+    var overlayMaps = {     //覆盖图层
+        "地图注记": norAnn,
+        "影像注记": satAnn,
+    };
+    var myMap = L.map("mapid", {
+        center: [30.55, 114.3],
+        zoom: 10,
+        layers: [norMap,norAnn],    //网页初始化加载norMap和norAnn图层
+        zoomControl: false   //网页初始化时不加载默认缩放按钮
+    });
+
+    L.control.layers(baseLayers,overlayMaps).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+</script>
+</body>
+</html>

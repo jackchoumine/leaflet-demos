@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-1 图标沿线运动</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.geodesic.umd.min.js"></script>
+    <script src="JS/AnimatedMarker.js"></script>
+    <style>
+        #play{
+            position: absolute;
+            top:380px;
+            left: 10px;
+            z-index: 500;
+        }
+        #stop{
+            position: absolute;
+            top:380px;
+            left: 55px;
+            z-index: 500;
+        }
+    </style>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<button type="button" id="play" onclick="play()">播放</button>
+<button type="button" id="stop" onclick="stop()">暂停</button>
+<script>
+    var myMap = L.map("mapid", {
+        center: [45,-50],
+        zoom:2,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>',
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    var norAnn = L.tileLayer.chinaProvider('TianDiTu.Normal.Annotion', {    //天地图注记图层
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    var Berlin = {lat: 52.5, lng: 13.35};
+    var LosAngeles = {lat: 33.82, lng: -118.38};
+    var geodesic = new L.Geodesic([LosAngeles, Berlin]).addTo(myMap);//构建测地线
+    var myIcon = L.icon({
+        iconUrl: 'CSS/images/airplane.png',//飞机图标
+        iconSize: [50, 25], //图标大小
+    });
+    var arrNodes=geodesic.getLatLngs()[0];  //获取测地线的坐标
+    var animatedMarker = L.animatedMarker(arrNodes, {
+        icon: myIcon,   //使用的图标
+        autoStart: false,   //动画是否自动开始
+        distance: 3000,   //单位：米
+        interval: 2,      //单位：毫秒
+    }).addTo(myMap);
+    //myMap.addLayer(animatedMarker);
+
+    function play() {   //播放
+        var latlng=animatedMarker.getLatLng();  //获取图标当前坐标
+        if((latlng.lat==Berlin.lat) && (latlng.lng==Berlin.lng)){   //判断是否已到终点
+            myMap.removeLayer(animatedMarker);
+            animatedMarker=L.animatedMarker(arrNodes, { //重新开始，返回起点开始飞行
+                icon: myIcon,
+                distance: 3000,  //单位：米
+                interval: 2,     //单位：毫秒
+            }).addTo(myMap);
+        }else{
+            animatedMarker.start();     //控制图标运动开始
+        }
+    }
+    function stop() {   //暂停播放
+        animatedMarker.stop();     //控制图标运动暂停
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>5-9 分层设色法</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/5-1.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src="JS/d3.js"></script>
+    <script src='JS/leaflet-omnivore.min.js'></script>
+    <script src="JS/turf.min.js"></script>
+    <script src="JS/leaflet.legend.js"></script>
+    <script src="JS/choropleth.js"></script>
+    <style type="text/css">
+        .legend {
+            color: #555;
+            padding: 6px 8px;
+            font: 12px Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .legend ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            clear: both;
+        }
+        .legend li {
+            display: inline-block;
+            width: 30px;
+            height: 22px;
+        }
+        .legend .min {
+            float: left;
+            padding-bottom: 5px;
+        }
+        .legend .max {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        zoomSnap:0.25,
+        center: [30.8, 112.4],
+        zoom: 6.5,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>,<a href="http://datav.aliyun.com/tools/atlas/">DATAV.GeoAtlas</a> ',
+        maxZoom: 18,
+        minZoom: 0,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    //L.control.scale().addTo(myMap);
+    //以下代码用于修改比例尺控件的相关属性
+    L.control.scale({
+        maxWidth : 200,     //最大宽度
+        metric : true,      //是否显示米制长度单位
+        imperial : false,   //是否显示英制长度单位
+        updateWhenIdle : true,  //是否在移动地图结束后更新
+    }).addTo(myMap);
+
+    var pointLayer=omnivore.csv('data/Hubei.csv',{
+        latfield: '纬度(度)',
+        lonfield: '经度(度)',
+        delimiter: ',',
+        ele: '高程(米)'
+    }).on('ready', function() {
+        //数据加载成功后调用，加载湖北省轮廓数据
+        var geojsonLayer = new L.GeoJSON.AJAX("data/Hubei_Outline.json",{
+            style:{
+                weight: 6,
+                fillColor: '#ffffff',
+                fillOpacity: 0.8
+            }
+        }).addTo(myMap);
+        geojsonLayer.on('data:loaded',function(data) {
+            var hbArea=geojsonLayer.toGeoJSON();
+            var hbFeature=turf.polygon(hbArea.features[0].geometry.coordinates[0]);
+            var points=pointLayer.toGeoJSON();
+            var breaks=[];
+            for(var i=0;i<45;i++){
+                breaks.push(100*i);
+            };
+            //生成等值面
+            var isobands = turf.isobands(points, breaks, {zProperty: '高程(米)'});
+            var isobandsArr=[]; //用于存储湖北省内的等值面
+            turf.flattenEach(hbArea,function(currentHBFeature,HBIndex,multiHBIndex){
+                turf.flattenEach(isobands, function (currentISFeature, featureIndex, multiFeatureIndex){
+                    var intersection = turf.intersect(currentHBFeature, currentISFeature);//相交操作
+                    if(intersection!=null){
+                        var eleRange=currentISFeature.properties["高程(米)"];//返回类似“0-100”的字符串
+                        var i=eleRange.indexOf("-");
+                        var ele=eleRange.slice(i+1);
+                        intersection.properties["zProperty"]=+ele;
+                        intersection.properties["高程(米)"]=eleRange;
+                        isobandsArr.push(intersection);
+                    }
+                });
+            });
+            if(isobandsArr.length>0){
+                var isobandsCol=turf.featureCollection(isobandsArr);
+                var choroplethLayer = L.choropleth(isobandsCol, {   //绘制分级统计图
+                    valueProperty: "zProperty",    //对应json数据中需要绘制的属性数据
+                    scale: ['#feedde', '#fdbe85','#fd8d3c','#e6550d', '#a63603'],//使用chroma.js来进行颜色插值，可以是两个颜色组成的范围，也可以包含任意多的颜色
+                    steps: 5,   //分级数，如果以上颜色为用户指定数量的颜色，此处需与以上颜色数量一致
+                    mode: 'q',//q表示分位数，e表示等距分级，k表示k均值聚类分级
+                    style: {
+                        color: '#fff',  //轮廓颜色
+                        weight: 2,  //轮廓宽度
+                        fillOpacity: 1   //填充透明度
+                    },
+                    onEachFeature: function (feature, layer) {
+                        var ele=feature.properties["高程(米)"]+"米";
+                        layer.bindTooltip(ele,{
+                            sticky:true,
+                        }).openTooltip();   //添加鼠标提示
+                    },
+                }).addTo(myMap);
+                //增加图例控件
+                var legend = L.control({ position: 'bottomright' });
+                legend.onAdd = function (myMap) {
+                    var div = L.DomUtil.create('div', 'info legend');
+                    var limits = choroplethLayer.options.limits;
+                    var colors = choroplethLayer.options.colors;
+                    var labels = [];
+                    //将最大、最小值显示在图例上
+                    div.innerHTML = '<div class="labels"><div class="min">' + limits[0] + '</div> \
+			<div class="max">' + limits[limits.length - 1] + '米</div></div>';
+                    //添加颜色块
+                    limits.forEach(function (limit, index) {
+                        labels.push('<li style="background-color: ' + colors[index] + '"></li>');
+                    });
+                    div.innerHTML += '<ul>' + labels.join('') + '</ul>';
+                    return div
+                };
+                legend.addTo(myMap);
+            };
+        });
+
+    });
+
+</script>
+</body>
+</html>

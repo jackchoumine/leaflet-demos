@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>4-13 图层蒙版</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet-tilelayer-mask.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [30.55, 114.3],
+        zoom: 10
+    });
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        maxZoom: 18,    //最大缩放等级
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+            'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',       //数据来源、知识版权等属性
+        id: "mapbox/satellite-v9",   //服务ID
+        tileSize: 512,          //瓦片尺寸
+        zoomOffset: -1,         //补偿缩放等级偏差
+        accessToken:'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'  //授权令牌
+    }).addTo(myMap);
+
+    var maskLayer = L.tileLayer.mask('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        maskUrl: 'images/heart.png', // 可选参数，默认为一个柔边的白色圆
+        maskSize: 250,  //可选参数，用于设置蒙版尺寸
+        maxZoom: 18,    //最大缩放等级
+        id:  "mapbox/streets-v11",   //服务ID
+        tileSize: 512,          //瓦片尺寸
+        zoomOffset: -1,         //补偿缩放等级偏差
+        accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'  //授权令牌
+    }).addTo(myMap);
+
+
+    myMap.on("mousemove", function(e) {     //监听鼠标移动事件
+        maskLayer.setCenter(e.containerPoint);
+    });
+
+</script>
+</body>
+</html>

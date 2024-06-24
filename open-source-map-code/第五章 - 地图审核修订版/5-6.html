@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>5-6 热力图</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/leaflet.legend.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src="JS/heatmap.js"></script>
+    <script src="JS/leaflet-heatmap.js"></script>
+    <script src="JS/leaflet.legend.js"></script>
+    <script src="JS/d3.js"></script>
+    <style>
+        .leaflet-legend-title{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [0, 0],
+        zoom:1,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>,<a href="https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php">USGS</a> ',
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    var norAnn = L.tileLayer.chinaProvider('TianDiTu.Normal.Annotion', {    //天地图注记图层
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    //var geojsonLayer = new L.GeoJSON.AJAX("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson");
+    var geojsonLayer = new L.GeoJSON.AJAX("data/all_month_20201220.geojson");
+    geojsonLayer.on('data:loaded',function(data) {
+        var arr=[];
+        geojsonLayer.eachLayer(function (layer) {
+            arr.push({
+                lat: layer.getLatLng().lat, //纬度
+                lng: layer.getLatLng().lng, //经度
+                mag:layer.feature.properties.mag,   //震级
+            })
+        });
+        var dMax=d3.max(arr,function (d) {  //获取最大震级
+            return d.mag;
+        });
+        var dMin=d3.min(arr,function (d) {  //获取最小震级
+            return d.mag;
+        });
+        var earthquakeData={    //按照heatmap.js支持的数据格式存储
+            max:dMax,
+            min:0,
+            data:arr,
+        }
+        var heatmapLayer = new HeatmapOverlay(cfg);
+        heatmapLayer.setData(earthquakeData);
+        heatmapLayer.addTo(myMap);
+
+        var heatMap = document.querySelector('.heatmap-canvas');
+        var heatmapInstance=heatmapLayer._heatmap;
+        heatMap.onmousemove = function(ev) {
+            var x = ev.layerX;
+            var y = ev.layerY;
+            // 获取点p(x/y)所在地的地震震级
+            var value = heatmapInstance.getValueAt({
+                x: x,
+                y: y
+            });
+            if(value>0){
+                this.setAttribute("title","震级："+ value +"级");
+            }else{
+                this.removeAttribute("title");
+            }
+        };
+        //鼠标移走之后隐藏提示
+        heatMap.onmouseout = function() {
+            this.removeAttribute("title");
+        };
+
+        //增加图例
+        L.control.Legend({
+            position: "bottomright",//图例位置
+            title: "地震震级分布图图例",
+            collapsed: false,  //图例折叠与否
+            symbolWidth:110,    //符号宽
+            symbolHeight:20,   //符号高
+            opacity: 0.5,      //透明度
+            column: 1,   //图例列数
+            legends: [{
+                label: "0 - "+dMax,
+                type: "rectangle",  //矩形方块
+                //fillColor: "#3182bd",
+            }]
+        }).addTo(myMap);
+
+        var legend = document.getElementsByTagName("i");
+        var legendCanvas=legend[0].children[0];
+        var context = legendCanvas.getContext('2d');//返回画布绘图环境
+        var grd=context.createLinearGradient(0, 0, 110, 0);//这是一个从左到右的渐变，以下在不同节点上分别添加热力图的几种颜色
+        grd.addColorStop(0,"#207cca");
+        grd.addColorStop(0.4,"#31ff00");
+        grd.addColorStop(0.7,"#f8ff00");
+        grd.addColorStop(1,"#ff0500");
+        context.fillStyle = grd;
+        context.fillRect(0,0,110,20);  //对应矩形宽、高
+    });
+
+
+    var cfg = {     //热力图配置
+        "radius": 2,    //热力点半径
+        "maxOpacity": .8,     //最大透明度
+        "scaleRadius": true,  //随着地图缩放而缩放
+        "useLocalExtrema": false,//是否使用局部极值
+        latField: 'lat',    //对应数组arr中的lat，纬度
+        lngField: 'lng',    //对应数组arr中的lng，经度
+        valueField: 'mag'   //对应数组arr中的mag，震级
+    };
+
+
+
+</script>
+</body>
+</html>

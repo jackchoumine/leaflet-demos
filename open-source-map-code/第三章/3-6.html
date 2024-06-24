@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3-6 GeoJSON数据写入代码</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map('mapid', {
+        center: [30.55, 114.3],     //试着修改该组数字看看
+        zoom: 10                    //试着修改该组数字看看
+    });
+    L.tileLayer.chinaProvider('TianDiTu.Normal.Map',{       //天地图常规地图图层
+        key: "8dae84fa331cbe1d834dde924688cad2",    //天地图服务许可
+        maxZoom:18,     //最大缩放等级
+        minZoom:5       //最小缩放等级
+    }).addTo(myMap);
+
+    var geojsonFeature={        //加载一个GeoJSON点数据
+        "type":"Feature",
+        "properties":{
+            "名称":"中国地质大学（武汉）未来城校区"
+        },
+        "geometry":{
+            "type":"Point",
+            "coordinates":[114.61225032806398,30.45973503762294]
+        }
+    };
+    L.geoJSON(geojsonFeature).addTo(myMap);     //加载GeoJSON图层到地图
+
+    var geojsonLine=[{      //加载两个GeoJSON线数据组成的数组
+        "type": "Feature",
+        "properties": {
+            "名称": "锦城街"
+        },
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [
+                [
+                    114.60529804229736,
+                    30.4621765060741
+                ],
+                [
+                    114.60572719573975,
+                    30.462398454717444
+                ],
+                [
+                    114.61126327514648,
+                    30.462620402855077
+                ],
+                [
+                    114.61692810058594,
+                    30.463064297613347
+                ]
+            ]
+        }},
+        {
+            "type": "Feature",
+            "properties": {
+                "名称": "未来三路"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        114.6053194999695,
+                        30.4621765060741
+                    ],
+                    [
+                        114.6053194999695,
+                        30.461677119777708
+                    ],
+                    [
+                        114.6053409576416,
+                        30.460798563598427
+                    ],
+                    [
+                        114.6053194999695,
+                        30.45991999949615
+                    ]
+                ]
+            }
+        }];
+    var lineLayer = L.geoJSON().addTo(myMap);
+    lineLayer.addData(geojsonLine);        //等同于L.geoJSON(geojsonLine).addTo(myMap);
+
+</script>
+</body>
+</html>

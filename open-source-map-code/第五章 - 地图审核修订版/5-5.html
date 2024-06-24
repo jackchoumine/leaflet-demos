@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>5-5 分区统计图——折线图</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/leaflet.legend.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src="JS/d3.js"></script>
+    <script src="JS/L.D3SvgOverlay.js"></script>
+    <script src="JS/leaflet.legend.js"></script>
+    <script src="data/华中GDP.js"></script>
+    <style>
+        .leaflet-legend-title{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        zoomSnap:0.25,
+        center: [30.5, 113.2],
+        zoom: 5.25,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+
+    /**
+     * 以下代码可添加天地图作为底图
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>,<a href="http://datav.aliyun.com/tools/atlas/">DATAV.GeoAtlas</a> ,' +
+            '统计数据 &copy;<a href="https://data.stats.gov.cn/">国家数据</a>',
+        maxZoom: 18,
+        minZoom: 5,
+    }).addTo(myMap);**/
+
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    function style(feature) {   //华中三省样式设置
+        return {
+            fillColor: "#a5a5a5",
+            weight: 1,
+            opacity: 1,
+            color: 'white',
+            dashArray: '3',
+            fillOpacity: 0.7
+        };
+    };
+
+    var geojsonLayer = new L.GeoJSON.AJAX("data/华中地区2021.json",{
+        style:style,    //设置样式
+    }).addTo(myMap);
+
+    var arr=[];
+    geojsonLayer.on('data:loaded',function(data){
+        geojsonLayer.eachLayer(function (layer){
+            arr.push({
+                name: layer.feature.properties.name,    //省名
+                latlng: layer.getBounds().getCenter(),  //获取各省中心，作为注记和图表的锚点
+                gdp:hzGDP[layer.feature.properties.name],//各省GDP
+            })
+        });
+        //console.log(arr);
+        var w=100,h=70;    //用于指定坐标轴长宽
+        var lineOverlay = L.d3SvgOverlay(function(sel,proj) {
+            //绘制折线图
+            var arrBinding=[];   //折线图绑定数据
+            var selTxt=sel.selectAll("text");  //不能放在后面的原因在于创建坐标轴的时候也创建了文字，会影响标签的生成
+            for(var j=0;j<arr.length;j++){
+                var gdp=arr[j].gdp;
+                for(key in gdp){
+                    arrBinding.push({
+                        year: key,
+                        gdp: gdp[key]
+                    })
+                }
+                //各省份地理中心转换为屏幕坐标
+                var px= proj.latLngToLayerPoint(arr[j].latlng).x-30;
+                var py= proj.latLngToLayerPoint(arr[j].latlng).y+20;
+                //定义两个坐标轴的比例关系
+                var xScale = d3.scaleLinear()
+                    .domain([d3.min(arrBinding,function (d) {
+                        return d.year;
+                    }), d3.max(arrBinding, function(d) {
+                        return d.year;
+                    })])
+                    .range([0, w]);
+                var yScale = d3.scaleLinear()
+                    .domain([0, 60000])
+                    .range([h, 0]);
+                //画坐标轴，定义X轴和Y轴
+                var xAxis = d3.axisBottom()
+                    .scale(xScale)
+                    .ticks(5)   //刻度数量
+                    .tickFormat(d3.format("d")); //去掉千分位的逗号
+                var yAxis = d3.axisLeft()
+                    .scale(yScale)
+                    .ticks(3);  //刻度数量
+                sel.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(" + px + "," + py + ")")
+                    .call(xAxis);   //x轴
+                sel.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", "translate(" + px + "," + (py-h) + ")")
+                    .call(yAxis);   //Y轴
+
+                //画折线
+                var line = d3.line()
+                    .x(function(d) {
+                        return xScale(d.year);
+                    })
+                    .y(function(d) {
+                        return yScale(d.gdp);
+                    });
+                sel.append("path")
+                    .datum(arrBinding)
+                    .attr("transform", "translate(" + px + "," + (py-h) + ")")
+                    .attr("fill", "none")
+                    .attr("stroke", "blue")
+                    .attr("stroke-width", 3)
+                    .attr("stroke-linejoin", "round")
+                    .attr("stroke-linecap", "round")
+                    .attr("d", line);
+
+                //增加散点
+                var selCircles=sel.append("g").selectAll("g.circle");
+                var circleGroup=selCircles.data(arrBinding)
+                    .enter()
+                    .append("g")
+                    .attr("class", "circle")
+                    .attr("transform", function (d) {   //饼状图圆心坐标
+                        return "translate(" + px + "," + (py-h) + ")"
+                    });
+                circleGroup.append("circle")
+                    .attr("cx", function(d) {
+                        return xScale(d.year);
+                    })
+                    .attr("cy", function(d) {
+                        return yScale(d.gdp);
+                    })
+                    .attr("r", 3)
+                    .attr("fill","red");
+                circleGroup.append("title")   //鼠标提示
+                    .text(function(d,i) {
+                        return d.gdp+hzGDP["单位"];
+                    });
+
+                arrBinding=[];
+            };
+
+            //添加注记
+            var proName = selTxt.data(arr);
+            proName.enter()
+                .append("text")     //绘制文本
+                .text(function (d) {  //设置文本内容
+                    return d.name;
+                })
+                .attr('x', function (d) {
+                    return proj.latLngToLayerPoint(d.latlng).x;
+                })
+                .attr('y', function (d) {
+                    return proj.latLngToLayerPoint(d.latlng).y;
+                })
+                .attr('stroke', 'black');   //加粗**/
+        });
+        lineOverlay.addTo(myMap);
+
+        //增加图例
+        L.control.Legend({
+            position: "bottomright",//图例位置
+            title: "图例",
+            collapsed: false,  //图例折叠与否
+            symbolWidth:30,    //符号宽
+            symbolHeight:30,   //符号高
+            opacity: 0.5,      //透明度
+            column: 1,   //图例列数
+            legends: [{
+                label: "GDP",
+                type: "polyline",  //短线
+                color: 'blue',
+                weight:6,
+            }]
+        }).addTo(myMap);
+
+    });
+
+</script>
+</body>
+</html>

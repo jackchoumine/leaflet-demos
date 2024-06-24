@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3-23 缩略图控件</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/Control.MiniMap.css">
+    <link rel="stylesheet" href="CSS/leaflet.fullscreen.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/Control.MiniMap.js"></script>
+    <script src="JS/Leaflet.fullscreen.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+            key: "8dae84fa331cbe1d834dde924688cad2",
+            maxZoom: 18,
+            minZoom: 5,
+        });
+     var norAnn = L.tileLayer.chinaProvider('TianDiTu.Normal.Annotion', {
+            key: "8dae84fa331cbe1d834dde924688cad2",
+            maxZoom: 18,
+            minZoom: 5,
+        });
+     var satMap = L.tileLayer.chinaProvider('TianDiTu.Satellite.Map', {
+            key: "8dae84fa331cbe1d834dde924688cad2",
+            maxZoom: 18,
+            minZoom: 5
+        });
+     var satAnn = L.tileLayer.chinaProvider('TianDiTu.Satellite.Annotion', {
+            key: "8dae84fa331cbe1d834dde924688cad2",
+            maxZoom: 18,
+            minZoom: 5
+        });
+
+    var norLayers = L.layerGroup([norMap, norAnn]);     //常规图层及注记
+    var imageLayers = L.layerGroup([satMap, satAnn]);   //影像图层及注记
+
+    var baseLayers = {
+        "地图": norLayers,
+        "影像": imageLayers,
+    };
+    var myMap = L.map("mapid", {
+        center: [30.55, 114.3],
+        zoom: 10,
+        layers: [norLayers],    //网页初始化加载norMap图层
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+        attributionControl: false,      //不加载属性控件
+        //fullscreenControl: true,  //增加全屏控件，或以下代码：
+        /*fullscreenControl: {
+            pseudoFullscreen: true //如果为true,全屏时只是填满整个HTML文档
+        },*/
+    });
+
+    //L.control.layers(baseLayers).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    //L.control.scale().addTo(myMap);
+    //以下代码用于修改比例尺控件的相关属性
+    L.control.scale({
+        maxWidth : 200,     //最大宽度
+        metric : true,      //是否显示米制长度单位
+        imperial : false,   //是否显示英制长度单位
+        updateWhenIdle : true,  //是否在移动地图结束后更新
+    }).addTo(myMap);
+
+    //L.control.attribution().addTo(myMap);       //加载属性控件
+
+    /*L.control.attribution({     //属性说明前缀由“Leaflet”改为“天地图”
+        prefix:  '<a href="https://www.tianditu.gov.cn/">天地图</a>',
+    }).addTo(myMap);*/
+
+    var attControl=L.control.attribution();
+    attControl.setPrefix('<a href="https://www.tianditu.gov.cn/">天地图</a>'); //属性说明前缀
+    attControl.addAttribution('数据来源 &copy; 天地图');   //添加属性说明
+    attControl.addTo(myMap);
+
+    var rect1 = {color: "#ff1100", weight: 3};
+    var rect2 = {color: "#0000AA", weight: 1, opacity:0, fillOpacity:0};
+    var miniMap = new L.Control.MiniMap(imageLayers,{
+        toggleDisplay: true,    //显示缩略图展开按钮
+        aimingRectOptions : rect1,  //目标矩形框样式
+        shadowRectOptions: rect2,   //拖动矩形框样式
+    }).addTo(myMap);
+
+    myMap.addControl(new L.Control.Fullscreen({     //添加全屏显示控件
+        title: {
+            'false': '全屏显示',
+            'true': '退出全屏'
+        }
+    }));
+</script>
+</body>
+</html>

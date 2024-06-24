@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>5-8 等值线图</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/5-1.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src='JS/leaflet-omnivore.min.js'></script>
+    <script src="JS/turf.min.js"></script>
+    <script src="JS/leaflet.textpath.js"></script>
+    <script src="JS/leaflet.legend.js"></script>
+    <style>
+        .leaflet-legend-title{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        zoomSnap:0.25,
+        center: [30.8, 112.4],
+        zoom: 6.5,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>,<a href="http://datav.aliyun.com/tools/atlas/">DATAV.GeoAtlas</a> ',
+        maxZoom: 18,
+        minZoom: 0,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    //L.control.scale().addTo(myMap);
+    //以下代码用于修改比例尺控件的相关属性
+    L.control.scale({
+        maxWidth : 200,     //最大宽度
+        metric : true,      //是否显示米制长度单位
+        imperial : false,   //是否显示英制长度单位
+        updateWhenIdle : true,  //是否在移动地图结束后更新
+    }).addTo(myMap);
+
+    /*var geojsonMarkerOptions = {
+        radius: 5000,             //半径
+        fillColor: "#ff0000",   //填充颜色
+        color: "#000",          //轮廓颜色
+        weight: 1,              //轮廓粗细
+        opacity: 1,             //轮廓透明度
+        fillOpacity: 0.8        //填充透明度
+    };
+    var customLayer = L.geoJSON(null, {
+        // http://leafletjs.com/reference.html#geojson-style
+        pointToLayer:function (feature, latlng) {
+            return L.circle(latlng, geojsonMarkerOptions);
+        }
+    });*/
+
+    var pointLayer=omnivore.csv('data/Hubei.csv',{
+        latfield: '纬度(度)',
+        lonfield: '经度(度)',
+        delimiter: ',',
+        ele: '高程(米)'
+    }).on('ready', function() {
+        //数据加载成功后调用，加载湖北省轮廓数据
+        var geojsonLayer = new L.GeoJSON.AJAX("data/Hubei_Outline.json",{
+            style:{
+                weight: 2,
+                fillColor: '#ffffff',
+                fillOpacity: 0.8
+            }
+        }).addTo(myMap);
+        geojsonLayer.on('data:loaded',function(data) {
+            var hbArea=geojsonLayer.toGeoJSON();
+            var hbFeature=turf.polygon(hbArea.features[0].geometry.coordinates[0]);
+            var points=pointLayer.toGeoJSON();
+            /*var ptsWithin = turf.pointsWithinPolygon(points, hbArea);
+            var ptsFeatures=ptsWithin.features;
+            ptsFeatures.map(function(data){ //用于将对象中的字符串属性改为数值属性
+                data.properties["高程(米)"]=+data.properties["高程(米)"];
+            })
+            var dMax=d3.max(ptsWithin.features,function (data) {    //获取最大、最小高程
+                return +data.properties["高程(米)"];
+            });
+            var dMin=d3.min(ptsWithin.features,function (data) {
+                return +data.properties['高程(米)'];
+            });
+            console.log(dMin+","+dMax);;*/
+            var breaks=[];
+            for(var i=0;i<45;i++){
+                breaks.push(100*i);
+            };
+            //生成等高线
+            var isolines = turf.isolines(points, breaks, {zProperty: '高程(米)'});
+            /*L.geoJSON(ptsWithin,{
+                pointToLayer: function (feature, latlng) {
+                    //return L.circleMarker(latlng, geojsonMarkerOptions);  //圆形图案不会随地图比例尺变化而变化
+                    return L.circle(latlng, geojsonMarkerOptions);          //圆形图案会随地图比例尺变化而变化
+                }
+            }).addTo(myMap);*/
+            //L.geoJSON(isolines).addTo(myMap);
+
+            turf.featureEach(isolines, function (currentFeature, featureIndex) {
+                var currentCoordinates=currentFeature.geometry.coordinates;
+                var elevation=currentFeature.properties["高程(米)"];
+                for(var j=0;j<currentCoordinates.length;j++){
+                    var lineCoordinates=currentCoordinates[j];
+                    var line=turf.lineString(lineCoordinates);//每条折线简单化
+                    line.properties["高程(米)"]=elevation;
+                    var lineArr=[];
+                    var bool1=turf.booleanWithin(line,hbFeature);//是否位于面域内
+                    //var curved; //用于平滑处理，贝塞尔曲线
+                    if (bool1==true){
+                        //curved = turf.bezierSpline(line);
+                        lineArr.push(line);
+                    }else{
+                        var split = turf.lineSplit(line, hbFeature);//分割相交的等高线
+                        if (split.features.length>0){
+                            //console.log(split.features.length);
+                            turf.featureEach(split,function (currentSplit,splitIndex) {
+                                var bool2=turf.booleanContains(hbFeature, currentSplit);//是否位于面域中
+                                if(bool2==true){
+                                    //curved = turf.bezierSpline(currentSplit);
+                                    currentSplit.properties["高程(米)"]=elevation;
+                                    lineArr.push(currentSplit);
+                                }
+                            });
+                        }
+                    }
+                    if(lineArr.length>0){
+                        var lineCol=turf.featureCollection(lineArr);
+                        var lineLayer=L.geoJSON(lineCol,{
+                            onEachFeature:function (feature, layer) {
+                                //console.log(feature.properties["高程(米)"]);
+                                var ele=feature.properties["高程(米)"];
+                                layer.bindTooltip(ele.toString(),{
+                                    sticky:true,
+                                }).openTooltip();
+                                if((ele % 500)==0){   //获取每条等高线的高程值
+                                    layer.setText(ele.toString(), {  //Leaflet.TextPath插件方法
+                                        center: true,
+                                        offset: 5,
+                                        attributes: {
+                                            'font-weight': 'bold',//加粗
+                                            opacity:1,  //透明度
+                                            fill: '#834300',    //填充色
+                                            'font-size':15, //字大
+                                            stroke: "#834300",  //轮廓色
+                                            'stroke-width': 0.5 //轮廓宽度
+                                        },
+                                    });
+                                };
+                            },
+                            style:{
+                                "color": "#ff7800",
+                                "weight": 1,        //线粗
+                            },
+                        }).addTo(myMap);
+                    }
+                }
+                //=currentFeature
+                //=featureIndex
+            });
+        });
+    });
+
+    //增加图例
+    L.control.Legend({
+        position: "bottomright",//图例位置
+        title: "图例",
+        collapsed: false,  //图例折叠与否
+        symbolWidth:30,    //符号宽
+        symbolHeight:8,   //符号高
+        opacity: 0.8,      //透明度
+        column: 1,   //图例列数
+        legends: [{
+            label: "等高线",
+            type: "rectangle",  //矩形方块
+            fillColor: '#ff7800',
+        }]
+    }).addTo(myMap);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-10 流场动画</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/d3.js"></script>
+    <script src="JS/leaflet.canvaslayer.field.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [45,-50],
+        zoom:2,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('Geoq.Normal.PurplishBlue', {
+        attribution: '地图数据 &copy; <a href="http://www.geoq.cn/">GeoQ</a> ',
+        maxZoom: 10,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    // 自定义参数的矢量动画层
+    d3.text('data/Atlantic_U.asc').then(function (u){
+        d3.text('data/Atlantic_V.asc').then(function (v) {
+            let vf = L.VectorField.fromASCIIGrids(u, v, 0.001); //换算成单位：m/s
+            let layer = L.canvasLayer.vectorFieldAnim(vf, {
+                paths: 100,
+                color: "#FF6699",
+                width: 3,
+                velocityScale: 1 / 10,
+                mouseMoveCursor: null
+            }).addTo(myMap);
+            var layer2 = L.canvasLayer.vectorFieldAnim(vf, {
+                paths: 10000,
+                color: "cyan",
+                width: 0.5,
+                fade: 0.92,
+                maxAge: 2000,
+                velocityScale: 1 / 100,
+                mouseMoveCursor: null
+            }).addTo(myMap);
+            myMap.fitBounds(layer.getBounds());
+            // 每隔一段时间随机改变颜色
+            var colors = ['cyan', 'yellow', 'pink', 'aqua', 'DeepSkyBlue'];
+            setInterval(function () {
+                var r = Math.random() * colors.length | 0;
+                layer.options.color = colors[r];
+            }, 5000);
+        });
+    });
+</script>
+</body>
+</html>

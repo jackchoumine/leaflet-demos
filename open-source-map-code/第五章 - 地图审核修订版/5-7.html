@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>5-7 蜂窝图</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src="JS/colorbrewer.js"></script>
+    <script src="JS/turf.min.js"></script>
+    <script src="JS/choropleth.js"></script>
+    <style type="text/css">
+        .legend {
+            color: #555;
+            padding: 6px 8px;
+            font: 12px Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .legend ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            clear: both;
+        }
+        .legend li {
+            display: inline-block;
+            width: 30px;
+            height: 22px;
+        }
+        .legend .min {
+            float: left;
+            padding-bottom: 5px;
+        }
+        .legend .max {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [38, -100],
+        zoom:4,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('TianDiTu.Normal.Map', {
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        attribution: '地图数据 &copy; <a href="https://www.tianditu.gov.cn/">天地图</a>,<a href="https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php">USGS</a> ,',
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    var norAnn = L.tileLayer.chinaProvider('TianDiTu.Normal.Annotion', {    //天地图注记图层
+        key: "8dae84fa331cbe1d834dde924688cad2",
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    var mapBounds=myMap.getBounds().toBBoxString();//获取当前视图范围
+    var bbox=mapBounds.split(",");
+    bbox=bbox.map(Number);  //数组内的所有字符串转成数字
+    var cellSide = 50;  //每个正六边形大小
+    var options = {units: 'miles'}; //单位
+    var hexgrid = turf.hexGrid(bbox, cellSide, options);    //生成蜂窝数据
+    var geojsonLayer = new L.GeoJSON.AJAX("data/quakes_USA_20201127.geojson",{
+        middleware: function(geojson) {
+            var featureArr=[];
+            turf.featureEach(hexgrid,function (feature,index) {
+                var newFeature=JSON.parse(JSON.stringify( feature ));//复制对象，在增加对象属性时以便传值
+                var ptsWithin = turf.pointsWithinPolygon(geojson, feature);
+                if(ptsWithin.features.length>0){
+                    newFeature.properties.num = ptsWithin.features.length;
+                    //console.log(ptsWithin.features.length);
+                    featureArr.push(newFeature);
+                }
+            });
+            if(featureArr.length>0){
+                var hexCol=turf.featureCollection(featureArr);
+                //L.geoJSON(hexCol).addTo(myMap);
+                var classes=5;
+                var scheme = colorbrewer["YlOrRd"][classes];
+                var choroplethLayer = L.choropleth(hexCol, {   //绘制分级统计图
+                    valueProperty: "num",    //对应json数据中需要绘制的属性数据
+                    scale: scheme,//使用chroma.js来进行颜色插值，可以是两个颜色组成的范围，也可以包含任意多的颜色
+                    steps: classes,   //分级数，如果以上颜色为用户指定数量的颜色，此处需与以上颜色数量一致
+                    mode: 'k',//q表示分位数，e表示等距分级，k表示k均值聚类分级
+                    style: {
+                        color:"#e31a1c",  //轮廓颜色
+                        weight: 1,  //轮廓宽度
+                        fillOpacity: 0.8    //填充透明度
+                    },
+                    onEachFeature: function (feature, layer) {
+                        layer.bindPopup("地震次数："+feature.properties.num).openPopup();
+                    },
+                }).addTo(myMap);
+
+                //增加图例控件
+                var legend = L.control({ position: 'bottomright' });
+                legend.onAdd = function (myMap) {
+                    var div = L.DomUtil.create('div', 'info legend');
+                    var limits = choroplethLayer.options.limits;
+                    var colors = choroplethLayer.options.colors;
+                    var labels = [];
+                    //将最大、最小值显示在图例上
+                    div.innerHTML = '<div class="labels"><div class="min">' + limits[0] + '</div> \
+			<div class="max">' + limits[limits.length - 1] + '</div></div>';
+                    //添加颜色块
+                    limits.forEach(function (limit, index) {
+                        labels.push('<li style="background-color: ' + colors[index] + '"></li>');
+                    });
+                    div.innerHTML += '<ul>' + labels.join('') + '</ul>';
+                    return div
+                };
+                legend.addTo(myMap);
+        }}
+    });
+</script>
+</body>
+</html>

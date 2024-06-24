@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>4-6 提示框</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/L.Control.MousePosition.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src="JS/L.Control.MousePosition.js"></script>
+    <style>
+        #setZoomID{
+            width: 30px;
+            height:30px;
+            position: absolute;
+            top: 90px;
+            left: 20px;
+            z-index: 550;   /*使其位于所有元素最上层*/
+        }
+    </style>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<input id="setZoomID" type="image" src="CSS/images/定位.png" alt="缩放控制" onclick="SetZoomTest()"/>
+<script>
+    var myMap = L.map('mapid', {
+        zoomSnap:0.25,              //每次缩放相隔0.25个等级
+        zoomDelta:0.5,              //自带缩放控件每次缩放的等级控制
+        wheelPxPerZoomLevel:10,     //鼠标滚轮缩放控制
+        center: [30.46,114.612],
+        zoom: 15                    //缩放等级为15
+    });
+    /*function onMapClick(e) {      //试着和以下popup对比一下
+        alert("经纬度：" + L.Util.formatNum(e.latlng.lng,3)+", "+L.Util.formatNum(e.latlng.lat,3));
+    };*/
+    var popup = L.popup();  //创建一个弹窗
+    function onMapClick(e) {
+        popup.setLatLng(e.latlng)    //设置弹窗位置
+            .setContent("经纬度：" + L.Util.formatNum(e.latlng.lng,3)+","+L.Util.formatNum(e.latlng.lat,3)) //设置弹窗内容
+            .openOn(myMap);     //在地图上打开弹窗，同时关闭已打开的弹窗
+    }
+    myMap.on('click', onMapClick);  //给地图增加鼠标单击事件
+    //myMap.addEventListener('click',onMapClick);      //给地图增加鼠标单击事件,与以上语句等同
+
+    L.tileLayer.chinaProvider('TianDiTu.Normal.Map',{       //天地图常规地图图层
+        key: "8dae84fa331cbe1d834dde924688cad2",    //天地图服务许可
+        maxZoom:18,     //最大缩放等级
+        minZoom:1       //最小缩放等级
+    }).addTo(myMap);
+
+    var geojsonLayer = new L.GeoJSON.AJAX("data/featureCUG.geojson"); //加载位于data文件夹内的geojson数据
+    geojsonLayer.bindTooltip(function (layer) {   //设置提示框
+        var feat=layer.feature;                //获取选中的要素
+        return feat.properties.名称;            //获取要素的名称作为提示框显示内容
+    },{
+        sticky:true,    //提示框随鼠标移动而移动，默认为false,提示框显示在地物要素中心
+    }).addTo(myMap);
+
+    /*****以下代码也可以实现提示框随鼠标移动而移动*****/
+    /*geojsonLayer.bindTooltip().addTo(myMap);
+    geojsonLayer.on('mousemove',function (e) {//提示框显示在鼠标处
+        geojsonLayer.setTooltipContent(e.layer.feature.properties.名称);
+        geojsonLayer.openTooltip(e.latlng); //指定提示框的显示位置
+    });*/
+
+    var geoBound=myMap.getBounds();     //获取地图初始化时的显示范围
+    function SetZoomTest() {    //试试注释的代码
+        //myMap.setZoom(5);     //设置地图缩放等级
+        //myMap.setView([30.46,114.612], 15);      //设置地图显示中心及地图缩放等级
+        //myMap.flyTo([30.46,114.612], 15);        //设置地图显示中心及地图缩放等级，动画飞入
+        //myMap.zoomIn(2);    //单击一次，地图放大2个等级，如果不设置数值，则单击一次，地图默认放大1个等级
+        //myMap.zoomOut(2);    //单击一次，地图缩小2个等级，如果不设置数值，则单击一次，地图默认缩小1个等级
+        //myMap.setZoomAround([30.46,114.612], 10); //地图围绕指定中心坐标进行缩放
+        myMap.fitBounds(geoBound);  //地图缩放至指定范围
+    }
+
+    //自定义一个控件用于记录地图当前的缩放等级
+    var ZoomViewer = L.Control.extend({
+        /*options:{       //定义参数
+            position:'bottomleft',  //还可以设置为'topleft', 'topright', 'bottomleft'或 'bottomright'
+        },*/
+        onAdd: function(){
+            var container= L.DomUtil.create('div');    //创建一个div容器
+            var gauge = L.DomUtil.create('div');       //创建一个div容器
+            container.style.width = '200px';    //容器宽度
+            container.style.background = 'rgba(255,255,255,0.5)';   //背景设置
+            container.style.textAlign = 'left'; //文字排列
+            myMap.on('zoomstart zoom zoomend', function(ev){    //地图缩放触发事件
+                gauge.innerHTML = 'Zoom level: ' + myMap.getZoom(); //获取当前地图缩放等级
+            })
+            container.appendChild(gauge);
+            return container;
+        }
+    });
+    var zoomViewControl=new ZoomViewer;     //实例化
+    //zoomViewControl.setPosition("bottomleft");    //调用setPosition()方法来调整控件位置
+    zoomViewControl.addTo(myMap);           //控件添加到地图上
+
+    L.control.mousePosition({       //添加经纬度显示控件
+        position:'bottomleft',      //控件位置，默认为左下角
+        separator: '，',            //经度和纬度之间的分隔符，默认为“：”
+        emptyString:'显示经纬度',   //经纬度未显示前的默认文本，默认为“Unavailable”
+        numDigits: 5,               //经纬度小数点后面的位数，默认为保留5位
+        lngFirst: true,             //是否将经度放在前面，默认为否
+        lngFormatter: function (e) {  //自定义函数控制经度小数位数
+            return  L.Util.formatNum(e,6);
+        },
+        latFormatter: function (e) {   //自定义函数控制纬度小数位数
+            return  L.Util.formatNum(e,6);
+        },
+        prefix: '经纬度：',        //经纬度数字前缀，默认为空
+    }).addTo(myMap);
+
+</script>
+</body>
+</html>

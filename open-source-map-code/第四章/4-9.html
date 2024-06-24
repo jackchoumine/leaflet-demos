@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>4-9 图像配准插件</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <link rel="stylesheet" href="CSS/vendor.css">
+    <link rel="stylesheet" href="CSS/leaflet.distortableimage.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/vendor.js"></script>
+    <script src="JS/leaflet.distortableimage.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [30.457,114.616],
+        zoom: 15,
+    });
+
+    L.tileLayer.chinaProvider('GaoDe.Normal.Map',{       //高德地图常规地图图层
+        attribution: '<a href="https://www.amap.com/">高德</a>',       //数据来源、知识版权等属性
+        maxZoom:18,     //最大缩放等级
+        minZoom:5       //最小缩放等级
+    }).addTo(myMap);
+
+    myMap.whenReady(function() {
+        //缺省状况下图像加载到地图中央
+        img = L.distortableImageOverlay('images/Future_CUG0.png',{
+            actions: [L.ScaleAction,L.DistortAction,L.RotateAction, L.FreeRotateAction, L.LockAction],//保留其中几个功能
+            translation: {  //英文提示翻译为中文提示
+                //dragImage: '平移',
+                scaleImage: '缩放',
+                distortImage: '扭曲',
+                rotateImage: '固定旋转',
+                freeRotateImage: '自由旋转',
+                lockMode: '锁定',
+                //makeImageTransparent: '透明',
+                //addBorder: '边框',
+                //exportImage: '导出',
+                //deleteImage: '删除',
+                //confirmImageDelete: '图像将从地图上永久删除，确定删除?',
+            },
+            //editable: false,      //是否可编辑
+            //fullResolutionSrc: 'data/Future_CUG.jpg',     //指定一个更高分辨率的对应图像，配准后导出为调整后的全分辨率图像
+            //suppressToolbar: true,//隐藏工具箱
+        }).addTo(myMap);
+    });
+
+</script>
+</body>
+</html>

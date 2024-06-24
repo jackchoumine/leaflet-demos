@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-8 流向图</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/tween.umd.js"></script>
+    <script src="JS/CanvasFlowmapLayer.js"></script>
+    <script src='JS/leaflet-omnivore.min.js'></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [15,-15],
+        zoom: 3,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('Geoq.Normal.PurplishBlue', {
+        attribution: '地图数据 &copy; <a href="http://www.geoq.cn/">GeoQ</a> ',
+        maxZoom: 18,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+    var canvasRenderer = L.canvas();
+    //L.control.scale().addTo(myMap);
+    //以下代码用于修改比例尺控件的相关属性
+    L.control.scale({
+        maxWidth : 200,     //最大宽度
+        metric : true,      //是否显示米制长度单位
+        imperial : false,   //是否显示英制长度单位
+        updateWhenIdle : true,  //是否在移动地图结束后更新
+    }).addTo(myMap);
+    //动画实现
+    var pointLayer=omnivore.csv('data/Flowmap_Cities_one_to_many.csv',{
+        latfield: 's_lat',  //起点纬度
+        lonfield: 's_lon',  //起点经度
+        delimiter: ',',     //分隔符
+    }).on('ready', function() {
+        pointLayer.eachLayer(function (layer) {
+            layer.feature.properties.s_lat=layer.feature.geometry.coordinates[1];
+            layer.feature.properties.s_lon=layer.feature.geometry.coordinates[0];
+        });
+        var geoJsonFeatureCollection =pointLayer.toGeoJSON();
+        var pathOptions={   //静态贝塞尔曲线
+            symbol:
+                {
+                    lineCap: "round",   //线条末端线帽的样式
+                    lineWidth: 0.75,    //线条宽度
+                    shadowBlur: 1.5,    //阴影模糊级别
+                    shadowColor: "rgb(255, 0, 51)", //阴影的颜色
+                    strokeStyle: "rgba(255, 0, 51, 0.8)",   //笔触的颜色、渐变或模式
+                },
+            type: "simple"
+        };
+        var animatedPathOptions={   //动态贝塞尔曲线
+            symbol:
+                {
+                    lineCap: "round",
+                    lineDashOffsetSize: 4,  //虚线偏移量
+                    lineWidth: 1.25,
+                    shadowBlur: 2,
+                    shadowColor: "rgb(255, 0, 51)",
+                    strokeStyle: "rgb(255, 46, 88)",
+                },
+            type: "simple"
+        };
+        var oneToManyFlowmapLayer = L.canvasFlowmapLayer(geoJsonFeatureCollection, {
+            originAndDestinationFieldIds: {
+                originUniqueIdField: 's_city_id',       //起点ID
+                originGeometry: {                       //起点坐标
+                    x: 's_lon',  //经度
+                    y: 's_lat'   //纬度
+                },
+                destinationUniqueIdField: 'e_city_id',  //终点ID
+                destinationGeometry: {                  //终点坐标
+                    x: 'e_lon',  //经度
+                    y: 'e_lat'   //纬度
+                }
+            },
+            style: function(geoJsonFeature) {
+                //可使用leaflet中path的所有样式选项
+                // GeoJSON数据的属性被修改，开发者需要通过"isOrigin"来判断是起点还是终点，从而设置其样式
+                if (geoJsonFeature.properties.isOrigin) {
+                    return {
+                        renderer: canvasRenderer, // recommended to use your own L.canvas()
+                        radius: 5,  //半径
+                        weight: 1,  //线宽
+                        color: 'rgb(195, 255, 62)', //线划颜色
+                        fillColor: 'rgba(195, 255, 62, 0.6)',   //填充色
+                        fillOpacity: 0.6    //填充透明度
+                    };
+                } else {
+                    return {    //同上
+                        renderer: canvasRenderer,
+                        radius: 2.5,
+                        weight: 0.25,
+                        color: 'rgb(17, 142, 170)',
+                        fillColor: 'rgb(17, 142, 170)',
+                        fillOpacity: 0.7
+                    };
+                }
+            },
+            canvasBezierStyle:pathOptions,//静态曲线样式
+            animatedCanvasBezierStyle:animatedPathOptions,//动态曲线样式
+            pathDisplayMode: 'selection',//显示模式，或为“all”
+            animationStarted: true,      //动画自动播放
+            animationEasingFamily: 'Linear',//还可以是Quadratic、Cubic、Quartic、Quintic、Sinusoidal、Exponential、Circular、Elastic、Back、Bounce
+            animationEasingType: 'None',    //还可以是In、Out、InOut
+            animationDuration: 2000         //动画播放速度
+        }).addTo(myMap);
+        oneToManyFlowmapLayer.on('click', function(e) {
+            if (e.sharedOriginFeatures.length) {
+                oneToManyFlowmapLayer.selectFeaturesForPathDisplay(e.sharedOriginFeatures, 'SELECTION_NEW');
+            }
+            if (e.sharedDestinationFeatures.length) {
+                oneToManyFlowmapLayer.selectFeaturesForPathDisplay(e.sharedDestinationFeatures, 'SELECTION_NEW');
+            }
+        });
+
+        // 运行后立即显示一个流向动画
+        oneToManyFlowmapLayer.selectFeaturesForPathDisplayById('s_city_id', '183', true, 'SELECTION_NEW');
+    });
+
+</script>
+</body>
+</html>

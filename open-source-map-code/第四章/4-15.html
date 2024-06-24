@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>4-15 地图注记</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+    <script src="JS/leaflet.textpath.js"></script>
+</head>
+<style>
+    .pointLabel{
+        color: red;
+        font-size: large;
+        font-family:黑体;
+    }
+</style>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map('mapid', {
+        center: [30.46,114.6115],
+        zoom: 16,                    //缩放等级为15
+    });
+    L.tileLayer.chinaProvider('TianDiTu.Normal.Map',{       //天地图常规地图图层
+        key: "8dae84fa331cbe1d834dde924688cad2",    //天地图服务许可
+        maxZoom:18,     //最大缩放等级
+        minZoom:1       //最小缩放等级
+    }).addTo(myMap);
+
+    var geojsonLayer = new L.GeoJSON.AJAX("data/featureCUG.geojson",{
+        onEachFeature: function (feature, layer) {
+            switch (feature.geometry.type) {    //判断要素的几何类型
+                 case 'LineString':              //线要素
+                     layer.setText(feature.properties.名称, {
+                         center: true,
+                         offset: 0,
+                         attributes: {'font-weight': 'bold',
+                             fill: 'black',
+                             'font-size': '15'},
+                     });
+                     break;
+                case 'Point':
+                    latlng=layer._latlng;
+                    L.marker(latlng, {
+                        icon: L.divIcon({
+                            className: 'pointLabel',    //设置类名，用于样式控制
+                            html: feature.properties.名称,  //注记内容
+                            iconSize: [150, 20],    //注记放置空间
+                        })
+                    }).addTo(myMap);
+
+                    /*var pointLabel=document.getElementsByClassName('pointLabel');//通过类名找到元素
+                    //以下设置注记样式
+                    pointLabel[0].style.color= 'red';
+                    pointLabel[0].style['font-size']='large';
+                    pointLabel[0].style['font-family']='黑体';*/
+                    break;
+                case 'Polygon':
+                    latlng=layer.getBounds().getCenter();  //获取几何中心，作为注记锚点
+                    L.marker(latlng, {
+                        icon: L.divIcon({
+                            className: 'polygonLabel',    //设置类名，用于样式控制
+                            html: feature.properties.名称,  //注记内容
+                            iconSize: [110, 20],   //注记放置空间
+                        })
+                    }).addTo(myMap);
+                    var polygonLabel=document.getElementsByClassName('polygonLabel');//通过类名找到元素
+                    //以下设置注记样式
+                    polygonLabel[0].style.color='green';
+                    polygonLabel[0].style['font-family']='黑体';
+                    break;
+            }
+        }
+    }).addTo(myMap);
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3-8 加载客户端电脑上的GeoJSON数据-1</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <style>
+        #fileID{
+            position: absolute;
+            top: 20px;
+            left:60px;
+            cursor: pointer;    /*设置鼠标样式*/
+            z-index: 500;       /*设置元素的堆叠顺序，使之处于最顶端*/
+        }
+    </style>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<input type="file" name="JsonName" id="fileID"/>
+<script>
+    var myMap = L.map('mapid', {    //定位到中国地质大学（武汉）未来城校区
+        center: [30.46,114.612],
+        zoom: 15,
+    });
+    L.tileLayer.chinaProvider('TianDiTu.Normal.Map',{       //天地图常规地图图层
+        key: "8dae84fa331cbe1d834dde924688cad2",    //天地图服务许可
+        maxZoom:18,     //最大缩放等级
+        minZoom:5       //最小缩放等级
+    }).addTo(myMap);
+
+    var fileInput=document.getElementById("fileID");
+    fileInput.onchange=function(e) {
+        var files = e.target.files;
+        if(files && files.length > 0) {
+            if (!/\.(geojson)$/.test(files[0].name)) {  //正则表达式，用于判断扩展名是否是".geojson"
+                alert('请选择geojson数据!');
+                return;
+            };
+            var reader = new FileReader();
+            //读取文件
+            reader.readAsText(files[0], "UTF-8");   //将文件读取为文本
+            reader.onload = function (evt) {        //读取文件成功之后回来这里
+                var fileString = evt.target.result;     //返回GeoJSON内容字符串
+                var jsonFile = JSON.parse(fileString);  //解析为一个JSON对象
+                L.geoJSON(jsonFile).addTo(myMap);     //加载GeoJSON图层到地图
+            };
+            reader.onerror = function(evt) {    //读取文件失败处理
+                console.error("GeoJSON文件读取失败! 错误代码：" + event.target.error.code);
+            };
+        }
+    };
+</script>
+</body>
+</html>

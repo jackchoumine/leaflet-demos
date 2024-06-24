@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>4-8 图像配准</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [30.457,114.616],
+        zoom: 15,
+    });
+
+    L.tileLayer.chinaProvider('GaoDe.Normal.Map',{       //高德地图常规地图图层
+        attribution: '<a href="https://www.amap.com/">高德</a>',       //数据来源、知识版权等属性
+        maxZoom:18,     //最大缩放等级
+        minZoom:5       //最小缩放等级
+    }).addTo(myMap);
+
+    var imageUrl = 'images/Future_CUG.png',  //指定图像路径
+        imageBounds = [[30.46108, 114.6099], [30.4542,  114.62297]];//指定图像在地图上的范围
+    /*var corner1 = L.latLng(30.46108, 114.6099),
+        corner2 = L.latLng(30.4542,  114.62297),
+        imageBounds = L.latLngBounds(corner1, corner2);*/
+    L.imageOverlay(imageUrl, imageBounds,{
+        opacity:1,  //设置透明度
+    }).addTo(myMap);
+</script>
+</body>
+</html>

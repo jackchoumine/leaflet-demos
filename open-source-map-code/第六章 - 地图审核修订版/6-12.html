@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-12 流场动画图例</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/d3.js"></script>
+    <script src="JS/leaflet.canvaslayer.field.js"></script>
+    <script src="JS/chroma.js"></script>
+</head>
+<body>
+<div id="mapid" style="width: 600px; height: 400px;"></div>
+<script>
+    var myMap = L.map("mapid", {
+        center: [45,-50],
+        zoom:2,
+        zoomControl: false,   //网页初始化时不加载默认缩放按钮
+    });
+    var norMap = L.tileLayer.chinaProvider('Geoq.Normal.PurplishBlue', {
+        attribution: '地图数据 &copy; <a href="http://www.geoq.cn/">GeoQ</a> ',
+        maxZoom: 10,
+        minZoom: 1,
+    }).addTo(myMap);
+    L.control.zoom({
+        zoomInTitle: '放大',
+        zoomOutTitle: '缩小'
+    }).addTo(myMap);
+
+    // 矢量动画图层
+    d3.text('data/Cantabria_U.asc').then(function (u){
+        d3.text('data/Cantabria_V.asc').then(function (v) {
+            var scaleFactor = 0.001; // 速度转换m/s
+            var vf = L.VectorField.fromASCIIGrids(u, v, scaleFactor);
+            var range = vf.range;
+            var scale = chroma.scale('OrRd').domain(range);//颜色表示范围
+            var layer = L.canvasLayer.vectorFieldAnim(vf, {
+                paths: 2000,
+                color: scale,
+                velocityScale: 1 / 200
+            }).addTo(myMap);
+            myMap.fitBounds(layer.getBounds());
+            //颜色图例
+            var bar = L.control.colorBar(scale, range, {
+                title: '洋流速度(m/s)',
+                units: 'm/s',
+                steps: 100,
+                decimals: 1,
+                width: 350,
+                height: 20,
+                position: 'bottomright',
+                background: '#000',
+                textColor: 'white',
+                textLabels: ['低速', '中速', '高速'],
+                labels: [0, 1.0, 2.0],
+                labelFontSize:9
+            }).addTo(myMap);
+
+            // info
+            layer.on('click', function (e) {
+                if (e.value !== null) {
+                    var vector = e.value;
+                    var v = vector.magnitude().toFixed(2);
+                    var d = vector.directionTo().toFixed(0);
+                    var html = (`<span class="popupText">${v} m/s to ${d}&deg</span>`);
+                    var popup = L.popup()
+                        .setLatLng(e.latlng)
+                        .setContent(html)
+                        .openOn(myMap);
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

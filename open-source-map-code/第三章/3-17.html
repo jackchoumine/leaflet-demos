@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3-17 自定义点数据图案</title>
+    <link rel="stylesheet" href="CSS/leaflet.css">
+    <script src="JS/leaflet.js"></script>
+    <script src="JS/leaflet.ChineseTmsProviders.js"></script>
+    <script src="JS/leaflet.ajax.js"></script>
+</head>
+<body>
+    <div id="mapid" style="width: 600px; height: 400px;"></div>
+    <script>
+        var myMap = L.map('mapid', {    //定位到中国地质大学（武汉）未来城校区
+            center: [30.46,114.612],
+            zoom: 15,
+        });
+        L.tileLayer.chinaProvider('TianDiTu.Normal.Map',{       //天地图常规地图图层
+            key: "8dae84fa331cbe1d834dde924688cad2",    //天地图服务许可
+            maxZoom:18,     //最大缩放等级
+            minZoom:5       //最小缩放等级
+        }).addTo(myMap);
+
+        var geojsonMarkerOptions = {
+            radius: 50,             //半径
+            fillColor: "#ff0000",   //填充颜色
+            color: "#000",          //轮廓颜色
+            weight: 1,              //轮廓粗细
+            opacity: 1,             //轮廓透明度
+            fillOpacity: 0.8        //填充透明度
+        };
+
+
+        var geojsonLayer = new L.GeoJSON.AJAX("data/featureCUG.geojson",{
+            style: function(feature) {
+                switch (feature.geometry.type) {    //判断要素的几何类型
+                    case 'LineString':              //线要素
+                        return {color: "#0000ff"};
+                    case 'Polygon':                 //面要素
+                        return {color: "#ff0000"};
+                }
+            },
+            pointToLayer: function (feature, latlng) {
+                //return L.circleMarker(latlng, geojsonMarkerOptions);  //圆形图案不会随地图比例尺变化而变化
+                return L.circle(latlng, geojsonMarkerOptions);          //圆形图案会随地图比例尺变化而变化
+            }
+        });   //加载位于data文件夹内的geojson数据
+        geojsonLayer.addTo(myMap);
+
+        /* 以下用于试验数据加载事件
+        geojsonLayer.on("data:loaded",function(data){
+            console.log(data);
+        });*/
+     </script>
+</body>
+</html>
