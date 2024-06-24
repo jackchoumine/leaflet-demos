@@ -1,0 +1,43 @@
+$mediumFontSize: 16px;
+
+.breadcrumb,
+.breadcrumb-item {
+  box-sizing: border-box;
+}
+
+.breadcrumb {
+  display: flex;
+  justify-content: flex-start;
+  &-item {
+    display: inline-block;
+    // 尺寸
+    &--small {
+      padding: 2px 6px;
+      border-radius: 2px;
+      .font-size-small {
+        font-size: $mediumFontSize - 2px;
+      }
+    }
+    &--medium {
+      padding: 5px 10px;
+      border-radius: 4px;
+
+      .font-size-medium {
+        font-size: $mediumFontSize;
+      }
+    }
+    &--large {
+      padding: 8px 14px;
+      border-radius: 6px;
+
+      .font-size-large {
+        font-size: $mediumFontSize + 2px;
+      }
+    }
+  }
+  &-separator {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+}
